@@ -1,0 +1,26 @@
+# Android / Gradle
+.gradle/
+build/
+app/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE
+.idea/
+*.iml
+.kotlin/
+
+# Артефакты
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Временное
+*.log
+.DS_Store
+
+# Локальный клон апстрима (исходники уже лежат в app/src/main/python/proxy)
+upstream-proxy/

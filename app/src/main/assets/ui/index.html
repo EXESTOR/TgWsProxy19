@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05080f">
+<title>TgWsProxy19</title>
+<style>
+:root{
+  --bg:#05080f;
+  --text:#eef1f7;
+  --muted:#94a3bf;
+  --dim:#6c7a96;
+  --line:rgba(255,255,255,.10);
+  --card:rgba(11,15,24,.74);
+  --violet:#8b5cf6;
+  --cyan:#8b5cf6;
+  --mint:#a78bfa;
+  --rose:#8b5cf6;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);overflow:hidden;
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
+
+/* фон: видимая сетка + мягкие свечения */
+.bg{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
+  radial-gradient(70% 45% at 50% -8%, rgba(139,92,246,.30) 0%, rgba(139,92,246,0) 60%),
+  radial-gradient(55% 40% at 100% 10%, rgba(196,181,253,.10) 0%, rgba(139,92,246,0) 62%),
+  radial-gradient(60% 45% at 0% 100%, rgba(139,92,246,.12) 0%, rgba(139,92,246,0) 60%),
+  #05080f}
+.bg::before{content:"";position:absolute;inset:-50%;z-index:0;
+  background-image:
+    linear-gradient(to right,rgba(255,255,255,.055) 1px,transparent 1px),
+    linear-gradient(to bottom,rgba(255,255,255,.055) 1px,transparent 1px);
+  background-size:40px 40px;
+  animation:gridMove 40s linear infinite;
+  -webkit-mask-image:radial-gradient(75% 60% at 50% 40%,#000 10%,rgba(0,0,0,.45) 65%,transparent 95%);
+  mask-image:radial-gradient(75% 60% at 50% 40%,#000 10%,rgba(0,0,0,.45) 65%,transparent 95%);
+  opacity:.85}
+@keyframes gridMove{0%{transform:translate(0,0)}50%{transform:translate(20px,20px)}100%{transform:translate(0,0)}}
+.glow{position:absolute;border-radius:50%;filter:blur(80px);mix-blend-mode:screen;will-change:transform}
+.g1{width:70vw;height:70vw;left:-26vw;top:-22vh;opacity:.35;background:radial-gradient(circle,#8b5cf6 0%,rgba(139,92,246,0) 70%);animation:drift1 26s ease-in-out infinite}
+.g2{width:60vw;height:60vw;right:-22vw;top:0;opacity:.28;background:radial-gradient(circle,#8b5cf6 0%,rgba(139,92,246,0) 70%);animation:drift2 30s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(6vw,4vh,0)}}
+@keyframes drift2{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-5vw,6vh,0)}}
+
+@keyframes gradientMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.grad-text{background:linear-gradient(90deg,#f9a8d4,#f472b6,#ef4444,#f472b6,#f9a8d4);
+  background-size:260% 100%;-webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+  animation:gradientMove 4.2s linear infinite;font-weight:800;letter-spacing:.01em}
+
+.app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;max-width:640px;margin:0 auto}
+
+header{display:flex;align-items:center;gap:12px;padding:18px 18px 6px}
+.logo{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;
+  background:linear-gradient(145deg,rgba(139,92,246,.9),rgba(168,176,189,.55),rgba(139,92,246,.9));
+  background-size:220% 220%;animation:gradientMove 9s ease-in-out infinite;
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 10px 22px -10px rgba(139,92,246,.9)}
+.logo svg{width:20px;height:20px;fill:#fff;display:block}
+h1{font-size:20px;font-weight:800;letter-spacing:-.4px;line-height:1.1}
+h1 span{background:linear-gradient(90deg,#c4b5fd,#e6e9ef);-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{font-size:10.5px;color:var(--dim);font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin-top:3px}
+
+main{flex:1;overflow-y:auto;padding:6px 16px 24px;scrollbar-width:none}
+main::-webkit-scrollbar{display:none}
+.tab{display:none}
+.tab.active{display:block;animation:fadeUp .3s cubic-bezier(.16,1,.3,1)}
+@keyframes itemIn{from{opacity:0;transform:translateY(12px) scale(.985);filter:blur(4px)}
+  to{opacity:1;transform:none;filter:blur(0)}}
+.tab.active .card > *{animation:itemIn .5s cubic-bezier(.22,1,.3,1.02) both}
+.tab.active .card > *:nth-child(1){animation-delay:.02s}
+.tab.active .card > *:nth-child(2){animation-delay:.06s}
+.tab.active .card > *:nth-child(3){animation-delay:.10s}
+.tab.active .card > *:nth-child(4){animation-delay:.14s}
+.tab.active .card > *:nth-child(5){animation-delay:.18s}
+.tab.active .card > *:nth-child(6){animation-delay:.22s}
+.tab.active .card > *:nth-child(7){animation-delay:.26s}
+.tab.active .card > *:nth-child(8){animation-delay:.30s}
+.tab.active .card > *:nth-child(9){animation-delay:.34s}
+.tab.active .card > *:nth-child(n+10){animation-delay:.38s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;margin-bottom:14px;
+  -webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 20px 40px -24px rgba(0,0,0,.9)}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.badge{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto;
+  background:linear-gradient(145deg,rgba(139,92,246,.85),rgba(168,176,189,.45),rgba(139,92,246,.85));
+  background-size:220% 220%;animation:gradientMove 7s ease-in-out infinite;
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.4)}
+.badge svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.card-head h2{font-size:16px;font-weight:700}
+.spacer{flex:1}
+.badge-soft{font-size:11px;font-weight:700;color:#c3c9d6;background:rgba(255,255,255,.07);
+  border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+
+/* герой */
+.hero{text-align:center;padding:22px 18px 18px}
+.orb{position:relative;width:276px;height:92px;border-radius:999px;margin:2px auto 18px;
+  display:grid;place-items:center;overflow:hidden;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.03) 46%,rgba(255,255,255,.01) 70%,rgba(255,255,255,.05)),
+    rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:
+    inset 0 2px 3px rgba(255,255,255,.30),
+    inset 0 -18px 28px rgba(0,0,0,.55),
+    0 18px 36px -20px rgba(0,0,0,.95);
+  transition:box-shadow .5s,border-color .5s,background .5s}
+.orb::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(100deg,transparent 32%,rgba(255,255,255,.16) 48%,transparent 64%);
+  transform:translateX(-70%);animation:orbSheen 6s ease-in-out infinite}
+@keyframes orbSheen{0%,58%{transform:translateX(-75%)}88%,100%{transform:translateX(75%)}}
+.orb svg{width:48px;height:48px;fill:#c3c9d6;display:block;position:relative;z-index:1;
+  transition:fill .4s,filter .4s}
+.orb.on{border-color:rgba(196,181,253,.42);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 46%,rgba(139,92,246,.10) 100%),
+    rgba(139,92,246,.06);
+  box-shadow:
+    inset 0 2px 3px rgba(255,255,255,.35),
+    inset 0 0 46px rgba(139,92,246,.25),
+    0 0 30px -8px rgba(139,92,246,.55),
+    0 18px 36px -20px rgba(0,0,0,.95)}
+.orb.on svg{fill:#fff;filter:drop-shadow(0 0 12px rgba(196,181,253,.85))}
+
+.hero h2{font-size:21px;font-weight:800;letter-spacing:-.3px}
+.hero .sub{margin-top:5px;font-size:12.5px;color:var(--muted);font-weight:500}
+.hero .hint{margin-top:7px;font-size:10.5px;color:var(--dim);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+
+/* большая кнопка: стейт-кнопка + линза + конфетти */
+.bigbtn{position:relative;isolation:isolate;width:100%;height:72px;margin-top:18px;border-radius:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:12px;padding:0 20px;color:#e9edf5;
+  background:#0c111a;border:1px solid rgba(255,255,255,.12);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.22),
+    inset 0 2px 2px rgba(255,255,255,.14),
+    inset 0 4px 4px rgba(255,255,255,.08),
+    inset 0 8px 8px rgba(255,255,255,.04),
+    inset 0 -10px 20px rgba(0,0,0,.55),
+    0 20px 38px -18px rgba(0,0,0,.95);
+  transition:border-color .4s,box-shadow .4s,background .4s,transform .12s;overflow:hidden}
+.bigbtn::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;padding:1px;
+  background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,.02) 45%,rgba(255,255,255,.12));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
+  opacity:.5;transition:opacity .4s}
+.bigbtn::after{content:"";position:absolute;left:0;right:0;bottom:0;height:72%;z-index:0;pointer-events:none;
+  background:linear-gradient(0deg,rgba(139,92,246,.55),rgba(139,92,246,.12) 45%,transparent 78%);
+  opacity:0;transition:opacity .45s;
+  -webkit-mask-image:linear-gradient(0deg,#000,transparent 72%);mask-image:linear-gradient(0deg,#000,transparent 72%)}
+.bigbtn.on::after{opacity:0;display:none}
+.bigbtn.on{border-color:rgba(196,181,253,.38);background:#0a0f1a;
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.26),
+    inset 0 2px 2px rgba(139,92,246,.10),
+    inset 0 -10px 22px rgba(0,0,0,.5),
+    0 0 18px -6px rgba(139,92,246,.45),
+    0 20px 38px -18px rgba(0,0,0,.95)}
+.bigbtn.on::before{opacity:.75;background:linear-gradient(180deg,rgba(196,181,253,.5),rgba(255,255,255,.03) 45%,rgba(139,92,246,.22))}
+.bigbtn:active{transform:scale(.987)}
+.bb-icon{position:relative;z-index:2;width:22px;height:22px;fill:#c3c9d6;flex:0 0 auto;
+  filter:drop-shadow(0 0 2px rgba(255,255,255,.35));animation:flicker 2.6s linear infinite}
+@keyframes flicker{50%{opacity:.45}}
+.bigbtn.on .bb-icon{fill:#c4b5fd;filter:drop-shadow(0 0 5px rgba(196,181,253,.6));animation:none}
+.bigbtn .label{position:relative;z-index:2;display:flex;align-items:center;
+  font-size:17px;font-weight:600;letter-spacing:.01em;color:#e9edf5}
+.bigbtn .label span{display:inline-block;will-change:transform,opacity,filter}
+.bigbtn.on .label{color:#f2edff;text-shadow:0 0 16px rgba(139,92,246,.35)}
+@keyframes letterIn{0%{opacity:0;transform:translateY(10px) scale(.86);filter:blur(6px)}
+  100%{opacity:1;transform:none;filter:blur(0)}}
+.confetti{position:absolute;width:7px;height:7px;border-radius:2px;z-index:5;pointer-events:none;
+  animation:confettiFly .9s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes confettiFly{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0)}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3) rotate(var(--rot))}}
+
+.btn{width:100%;border:0;border-radius:16px;height:52px;font-size:15px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .12s,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+.btn.soft{margin-top:10px;color:#e3e7ee;font-weight:600;
+  background:rgba(255,255,255,.028);border:1px solid rgba(255,255,255,.07);
+  -webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);
+  box-shadow:none}
+.btn.ghost{margin-top:10px;height:46px;font-size:13.5px;font-weight:600;color:#b9c0cb;
+  background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.06);
+  -webkit-backdrop-filter:blur(24px) saturate(170%);backdrop-filter:blur(24px) saturate(170%);
+  box-shadow:none}
+.btn[disabled]{opacity:.45;pointer-events:none}
+
+.chips{display:flex;flex-wrap:nowrap;gap:6px;justify-content:center;margin-top:16px}
+.chip{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:6px 9px;
+  font-size:10.5px;color:var(--muted);font-weight:600;white-space:nowrap;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.chip b{color:#eef1f7}
+.link-row{display:flex;align-items:center;gap:8px;margin-top:14px;padding:9px 10px;border-radius:14px;
+  background:rgba(0,0,0,.28);border:1px solid var(--line);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.link-row code{flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  color:#9ae6f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.copy{border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);border-radius:10px;
+  padding:7px 11px;font-size:11px;font-weight:600;color:#c8cdd7;cursor:pointer;
+  -webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%)}
+
+/* настройки */
+.lbl{display:block;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:14px 0 7px}
+.input{width:100%;height:46px;border:1px solid var(--line);border-radius:13px;
+  background:rgba(255,255,255,.045);padding:0 13px;font-size:14px;color:#fff;font-weight:600;outline:none;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:border-color .2s,background .2s}
+.input:focus{border-color:rgba(139,92,246,.55);background:rgba(255,255,255,.07)}
+.input.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+.row{display:flex;gap:8px;align-items:center}
+.row .input{flex:1;min-width:0}
+.iconbtn{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.03);cursor:pointer;display:grid;place-items:center;
+  -webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%)}
+.iconbtn svg{width:17px;height:17px;fill:none;stroke:#c3c9d6;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.022);border-radius:12px;
+  padding:11px 4px;font-size:12px;font-weight:600;color:#7f8ba0;cursor:pointer;letter-spacing:.02em;
+  transition:color .2s,background .2s,border-color .2s;
+  -webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%)}
+.seg button.active{background:rgba(255,255,255,.085);border-color:rgba(255,255,255,.16);color:#fff}
+.switch-row{display:flex;align-items:center;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.switch-row .t{font-size:14px;font-weight:700}
+.switch-row .s{font-size:11.5px;color:var(--dim);margin-top:2px}
+.switch{width:52px;height:30px;border-radius:999px;background:rgba(255,255,255,.10);border:1px solid var(--line);
+  position:relative;cursor:pointer;transition:background .22s;flex:0 0 auto}
+.switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(180deg,#fff,#c3c9d6);box-shadow:0 3px 8px rgba(0,0,0,.5);transition:transform .24s cubic-bezier(.2,.9,.3,1.2)}
+.switch.on{background:linear-gradient(135deg,#6d28d9,#8b5cf6);border-color:transparent;box-shadow:0 0 18px rgba(139,92,246,.35)}
+.switch.on i{transform:translateX(22px)}
+
+/* логи */
+.logs{height:min(38vh,320px);overflow-y:auto;border-radius:14px;padding:12px;margin-top:2px;
+  background:rgba(0,0,0,.42);border:1px solid var(--line);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;line-height:1.6;color:#d6cfff;
+  white-space:pre-wrap;word-break:break-word;scrollbar-width:none}
+.logs::-webkit-scrollbar{display:none}
+.logs .e{color:#c4b5fd}.logs .w{color:#b9c2d4}.logs .i{color:#d6cfff}
+
+/* инфо */
+.about{font-size:13.5px;line-height:1.65;color:#a8b0bd}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.tile{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:13px;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.tile .k{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.tile .v{font-size:12.5px;font-weight:700;color:#eef1f7;margin-top:5px}
+.notice{margin-top:14px;background:rgba(139,92,246,.10);border:1px solid rgba(139,92,246,.25);border-radius:13px;padding:13px 14px}
+.notice h3{font-size:12.5px;color:#eef1f7;margin-bottom:6px}
+.notice li{list-style:none;position:relative;padding-left:18px;font-size:12.5px;line-height:1.55;color:#a8b0bd;margin-top:5px}
+.notice li::before{content:'→';position:absolute;left:0;color:#8b9bb8;font-weight:700}
+
+/* док: выезжает свайпом */
+.dock-scrim{display:none}
+.dock{position:fixed;left:0;top:50%;bottom:auto;width:86px;z-index:40;
+  transform:translateY(-50%) translateX(calc(-100% + 26px));
+  transition:transform .46s cubic-bezier(.34,1.3,.5,1);
+  border-radius:0 22px 22px 0;padding:8px 8px 8px 6px;height:auto;
+  will-change:transform}
+.dock.open{transform:translateY(-50%) translateX(0)}
+.dock-bg{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;
+  background:rgba(9,13,21,.55);
+  -webkit-backdrop-filter:blur(34px) saturate(190%);backdrop-filter:blur(34px) saturate(190%);
+  border:1px solid rgba(255,255,255,.10);border-left:0;
+  opacity:0;transition:opacity .32s ease .1s}
+.dock.open .dock-bg{opacity:1}
+.handle{position:absolute;right:0;top:0;bottom:0;width:26px;z-index:2;display:grid;place-items:center;
+  touch-action:none;cursor:grab}
+.handle span{width:4px;height:44px;border-radius:2px;
+  background:linear-gradient(180deg,rgba(196,181,253,.9),rgba(139,92,246,.95));
+  box-shadow:0 0 14px rgba(139,92,246,.75);animation:handlePulse 2.6s ease-in-out infinite;
+  transition:height .3s,background .3s}
+@keyframes handlePulse{0%,100%{opacity:.75;box-shadow:0 0 10px rgba(139,92,246,.45)}50%{opacity:1;box-shadow:0 0 18px rgba(139,92,246,.9)}}
+.dock.open .handle span{height:36px;opacity:.7;animation:none}
+.dock-items{display:flex;flex-direction:column;gap:6px;width:56px;position:relative;z-index:1}
+.dock-items button{width:100%;cursor:pointer;padding:9px 2px;border-radius:14px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  color:#8b96ab;font-size:8px;font-weight:700;white-space:nowrap;
+  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  transition:color .2s,background .2s,border-color .2s}
+.dock-items svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dock-items button.active{color:#fff;background:rgba(139,92,246,.18);
+  border-color:rgba(196,181,253,.32)}
+
+.percent-row{margin-top:14px;display:none}
+.percent-row.show{display:block}
+.percent-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;
+  font-size:12.5px;color:#a8b0bd}
+.percent-head b{color:#fff;font-size:13px}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;
+  background:linear-gradient(90deg,#6d28d9,#8b5cf6 55%,#c4b5fd);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(180deg,#fff,#cfd8e8);box-shadow:0 3px 10px rgba(0,0,0,.6),inset 0 1px 1px #fff;
+  border:0;cursor:pointer}
+
+.toast{position:fixed;left:50%;bottom:70px;transform:translate(-50%,10px);z-index:60;max-width:86vw;
+  background:rgba(12,17,27,.92);border:1px solid rgba(255,255,255,.16);color:#fff;
+  padding:11px 16px;border-radius:13px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.22s;
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="bg"><span class="glow g1"></span><span class="glow g2"></span></div>
+
+<div class="app">
+  <header>
+    <div class="logo"><svg viewBox="1.898 1.636 21.002 17.285"><path d="M21.9 3.1c.3-.9-.6-1.7-1.5-1.4L2.7 8.6c-1 .3-1.1 1.7-.1 2.1l4.6 1.8 1.7 5.6c.2.8 1.3 1 1.8.3l2.4-3.1 4.6 3.4c.7.5 1.7.1 1.9-.7l3.3-15z"/></svg></div>
+    <div><h1>TgWsProxy<span>19</span></h1><p>mtproto ws proxy</p></div>
+  </header>
+
+  <main>
+    <section class="tab active" id="tab-proxy">
+      <div class="card hero">
+        <div class="orb" id="orb"><svg viewBox="1.898 1.636 21.002 17.285"><path d="M21.9 3.1c.3-.9-.6-1.7-1.5-1.4L2.7 8.6c-1 .3-1.1 1.7-.1 2.1l4.6 1.8 1.7 5.6c.2.8 1.3 1 1.8.3l2.4-3.1 4.6 3.4c.7.5 1.7.1 1.9-.7l3.3-15z"/></svg></div>
+        <h2 id="heroTitle">Прокси остановлен</h2>
+        <p class="sub" id="heroSub">127.0.0.1:1445</p>
+        <p class="hint" id="heroHint">нажмите кнопку ниже</p>
+
+        <button class="bigbtn" id="toggleBtn" aria-pressed="false">
+          <svg class="bb-icon" viewBox="0 0 24 24"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"/></svg>
+          <span class="label" id="toggleLabel"></span>
+        </button>
+
+        <button class="btn soft" id="btnApply">
+          <svg viewBox="0 0 24 24"><path d="M21 3L10.5 13.5"/><path d="M21 3l-7 18-3.5-7.5L3 10z"/></svg>
+          Применить в Telegram
+        </button>
+
+        <div class="chips">
+          <span class="chip">CF <b>авто</b></span>
+          <span class="chip">Порт <b id="chipPort">1445</b></span>
+          <span class="chip">H2 <b id="chipH2">off</b></span>
+          <span class="chip">DC <b id="chipDc">4</b></span>
+        </div>
+
+        <div class="link-row">
+          <code id="linkText">tg://proxy?…</code>
+          <button class="copy" id="btnCopyLink">копировать</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.5"/></svg></div>
+          <h2>Как пользоваться</h2>
+        </div>
+        <p class="about">Нажмите большую кнопку — прокси поднимется на 127.0.0.1. Дальше «Применить в Telegram», и клиент сам добавит прокси.</p>
+        <div class="notice">
+          <h3>Если не подключается</h3>
+          <ul>
+            <li>Порт 1443 часто занят другим приложением — смените на 1445.</li>
+            <li>Разрешите работу в фоне, иначе система остановит сервис.</li>
+            <li>Причину ошибки покажет вкладка «Логи».</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-settings">
+      <div class="card">
+        <div class="card-head">
+          <div class="badge"><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M2 12h20"/></svg></div>
+          <h2>Подключение</h2>
+        </div>
+
+        <label class="lbl">Порт</label>
+        <input class="input" id="inPort" type="number" inputmode="numeric" min="1" max="65535" value="1443">
+
+        <label class="lbl">Секретный ключ</label>
+        <div class="row">
+          <input class="input mono" id="inSecret" type="text" spellcheck="false" autocomplete="off" placeholder="32 hex">
+          <button class="iconbtn" id="btnRegen" aria-label="Новый ключ">
+            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+          </button>
+        </div>
+
+        <label class="lbl">Привязка DC</label>
+        <div class="seg" id="dcSeg">
+          <button data-dc="4:149.154.167.220">DC 4</button>
+          <button data-dc="2:149.154.167.220 4:149.154.167.220">DC 2+4</button>
+          <button data-dc="">Свой</button>
+        </div>
+        <input class="input mono" id="inDc" type="text" spellcheck="false" placeholder="4:149.154.167.220" style="margin-top:8px">
+
+        <div class="switch-row">
+          <div><div class="t">Отключить HTTP/2</div><div class="s">флаг --no-h2</div></div>
+          <div class="spacer"></div>
+          <button class="switch on" id="swH2" role="switch" aria-checked="true"><i></i></button>
+        </div>
+
+        <div class="switch-row">
+          <div><div class="t">Автозапуск</div><div class="s">стартовать при открытии</div></div>
+          <div class="spacer"></div>
+          <button class="switch on" id="swAuto" role="switch" aria-checked="true"><i></i></button>
+        </div>
+
+        <label class="lbl">Фон и энергосбережение</label>
+        <div class="seg" id="bgSeg">
+          <button data-mode="saver" class="active">Энергосбережение</button>
+          <button data-mode="percent">По процентам</button>
+          <button data-mode="off">Без ограничений</button>
+        </div>
+
+        <div class="percent-row" id="percentRow">
+          <div class="percent-head">
+            <span>Отключать при заряде ниже</span>
+            <b id="percentVal">15%</b>
+          </div>
+          <input type="range" id="percentRange" min="5" max="60" step="1" value="15">
+        </div>
+
+        <button class="btn ghost" id="btnBattery">Разрешить работу в фоне</button>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-logs">
+      <div class="card">
+        <div class="card-head">
+          <div class="badge"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M7 9l3 3-3 3"/><path d="M13 15h4"/></svg></div>
+          <h2>Лог событий</h2>
+          <div class="spacer"></div>
+          <span class="badge-soft" id="logCount">0</span>
+        </div>
+        <div class="seg" id="logSeg">
+          <button class="active" data-filter="all">Все</button>
+          <button data-filter="info">Info</button>
+          <button data-filter="err">Error</button>
+        </div>
+        <pre class="logs" id="logView">Логи появятся после запуска прокси…</pre>
+        <div class="row" style="margin-top:10px">
+          <button class="btn ghost" id="btnCopyLogs" style="margin-top:0">Скопировать</button>
+          <button class="btn ghost" id="btnClearLogs" style="margin-top:0">Очистить</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-info">
+      <div class="card">
+        <div class="card-head">
+          <div class="badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.5"/></svg></div>
+          <h2>О приложении</h2>
+        </div>
+        <p class="about">TgWsProxy19 — обёртка над консольным tg-ws-proxy (Flowseal). Python-ядро через Chaquopy, foreground-сервис держит WakeLock, трафик идёт через Cloudflare WebSocket.</p>
+        <div class="notice">
+          <h3>Сделано нейросетью</h3>
+          <p>Проект полностью создан нейросетью: код, интерфейс, отладка и сборка. Автор писал промты, придумывал фичи и тестировал всё на телефоне.</p>
+        </div>
+        <div class="info-grid">
+          <div class="tile"><div class="k">Версия</div><div class="v" id="infoVersion">1.0</div></div>
+          <div class="tile"><div class="k">Пакет</div><div class="v">com.tgwsproxy19</div></div>
+          <div class="tile"><div class="k">Ядро</div><div class="v">Python 3.12</div></div>
+          <div class="tile"><div class="k">ABI</div><div class="v">arm64-v8a</div></div>
+        </div>
+        <button class="btn ghost" id="btnGithub" style="margin-top:14px">Исходники на GitHub</button>
+        <button class="btn soft" id="btnTgChannel" style="margin-top:10px">
+          <svg viewBox="1.898 1.636 21.002 17.285"><path d="M21.9 3.1c.3-.9-.6-1.7-1.5-1.4L2.7 8.6c-1 .3-1.1 1.7-.1 2.1l4.6 1.8 1.7 5.6c.2.8 1.3 1 1.8.3l2.4-3.1 4.6 3.4c.7.5 1.7.1 1.9-.7l3.3-15z"/></svg>
+          <span class="grad-text">Мой Telegram-канал @EXESTOR</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <div class="dock" id="dock">
+    <div class="dock-bg"></div>
+    <div class="dock-items">
+      <button class="active" data-tab="proxy">
+        <svg viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M6.6 6.6a8 8 0 1 0 10.8 0"/></svg>Прокси
+      </button>
+      <button data-tab="settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9 2 2 0 1 1-2.8 2.8 1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5 2 2 0 1 1-4 0 1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3 2 2 0 1 1-2.8-2.8 1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1 2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9 2 2 0 1 1 2.8-2.8 1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5 2 2 0 1 1 4 0 1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3 2 2 0 1 1 2.8 2.8 1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1 2 2 0 1 1 0 4 1.7 1.7 0 0 0-1.5 1z"/></svg>Настройки
+      </button>
+      <button data-tab="logs">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M7 9l3 3-3 3"/><path d="M13 15h4"/></svg>Логи
+      </button>
+      <button data-tab="info">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.5"/></svg>Инфо
+      </button>
+    </div>
+    <div class="handle" id="dockHandle"><span></span></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var A = window.Android;
+  var $ = function(id){ return document.getElementById(id); };
+
+  var els = {
+    orb:$('orb'), heroTitle:$('heroTitle'), heroSub:$('heroSub'), heroHint:$('heroHint'),
+    toggleBtn:$('toggleBtn'), toggleLabel:$('toggleLabel'),
+    btnApply:$('btnApply'), btnCopyLink:$('btnCopyLink'), linkText:$('linkText'),
+    chipPort:$('chipPort'), chipH2:$('chipH2'), chipDc:$('chipDc'),
+    inPort:$('inPort'), inSecret:$('inSecret'), inDc:$('inDc'), swH2:$('swH2'), swAuto:$('swAuto'),
+    btnRegen:$('btnRegen'), btnBattery:$('btnBattery'), dcSeg:$('dcSeg'),
+    bgSeg:$('bgSeg'), percentRow:$('percentRow'), percentRange:$('percentRange'), percentVal:$('percentVal'),
+    logView:$('logView'), logSeg:$('logSeg'), logCount:$('logCount'),
+    btnCopyLogs:$('btnCopyLogs'), btnClearLogs:$('btnClearLogs'),
+    btnGithub:$('btnGithub'), btnTgChannel:$('btnTgChannel'), infoVersion:$('infoVersion'),
+    dock:$('dock'), dockHandle:$('dockHandle'), toast:$('toast')
+  };
+
+  var state = { running:false, status:'', error:'', port:1443, secret:'' };
+  var settings = { port:1443, secret:'', noH2:true, dcIp:'4:149.154.167.220', autostart:true, bgMode:'saver', bgPercent:15 };
+  var filter = 'all';
+  var lines = [];
+  var lastError = '';
+  var toastTimer = null;
+  var autoTried = false;
+  var labelText = '';
+
+  function call(name){
+    if (!A || !A[name]) return null;
+    try { return A[name].apply(A, Array.prototype.slice.call(arguments, 1)); } catch(e){ return null; }
+  }
+  function parse(json, fallback){
+    try { return JSON.parse(json || '') || fallback; } catch(e){ return fallback; }
+  }
+  function toast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 2300);
+  }
+  function escapeHtml(text){
+    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* --- кнопка: побуквенная анимация --- */
+  function setLabel(text){
+    if (text === labelText) return;
+    labelText = text;
+    els.toggleLabel.innerHTML = '';
+    for (var i = 0; i < text.length; i++) {
+      var span = document.createElement('span');
+      span.textContent = text[i] === ' ' ? '\u00a0' : text[i];
+      span.style.animation = 'letterIn .42s cubic-bezier(.22,1,.3,1.05) both';
+      span.style.animationDelay = (i * 22) + 'ms';
+      els.toggleLabel.appendChild(span);
+    }
+  }
+
+  /* --- конфетти при включении --- */
+  function burst(){
+    var rect = els.toggleBtn.getBoundingClientRect();
+    var colors = ['#8b5cf6','#8b5cf6','#a78bfa','#c4b5fd','#c4b5fd'];
+    for (var i = 0; i < 16; i++) {
+      var p = document.createElement('span');
+      p.className = 'confetti';
+      p.style.left = (rect.width * 0.62) + 'px';
+      p.style.top = '30px';
+      p.style.background = colors[i % colors.length];
+      p.style.setProperty('--dx', (Math.random() * 160 - 130) + 'px');
+      p.style.setProperty('--dy', (Math.random() * -90 - 20) + 'px');
+      p.style.setProperty('--rot', (Math.random() * 540 - 270) + 'deg');
+      p.style.animationDelay = (Math.random() * 90) + 'ms';
+      els.toggleBtn.appendChild(p);
+      setTimeout(function(el){ return function(){ el.remove(); }; }(p), 1400);
+    }
+  }
+
+  function loadSettings(){
+    var s = parse(call('getSettings'), {});
+    settings.port = s.port || 1443;
+    settings.secret = (s.secret || '').toLowerCase();
+    settings.noH2 = (s.noH2 !== false);
+    settings.dcIp = s.dcIp || '4:149.154.167.220';
+    settings.autostart = (s.autostart !== false);
+    settings.bgMode = s.bgMode || 'saver';
+    settings.bgPercent = parseInt(s.bgPercent, 10) || 15;
+    if (!settings.secret) settings.secret = (call('generateSecret') || '').toLowerCase();
+    els.inPort.value = settings.port;
+    els.inSecret.value = settings.secret;
+    els.inDc.value = settings.dcIp;
+    setSwitch(els.swH2, settings.noH2);
+    setSwitch(els.swAuto, settings.autostart);
+    syncBgSeg();
+    els.infoVersion.textContent = call('version') || '1.0';
+    persist();
+    syncDcSeg();
+  }
+
+  function setSwitch(el, on){
+    el.classList.toggle('on', !!on);
+    el.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+
+  function persist(){
+    settings.port = parseInt(els.inPort.value, 10) || 1443;
+    settings.secret = (els.inSecret.value || '').trim().toLowerCase();
+    settings.noH2 = els.swH2.classList.contains('on');
+    settings.autostart = els.swAuto.classList.contains('on');
+    settings.dcIp = (els.inDc.value || '').trim();
+    call('saveSettings', settings.port, settings.secret, settings.noH2, settings.dcIp);
+    call('setAutostart', settings.autostart);
+    call('setBackgroundPolicy', settings.bgMode, settings.bgPercent);
+    updateChips();
+    updateLink();
+  }
+
+  function dcLabel(){
+    var first = (settings.dcIp || '').trim().split(/[\s,]+/)[0] || '';
+    var m = first.match(/^(\d+):/);
+    return m ? m[1] : '—';
+  }
+
+  function updateChips(){
+    els.chipPort.textContent = settings.port;
+    els.chipH2.textContent = settings.noH2 ? 'off' : 'on';
+    els.chipDc.textContent = dcLabel();
+  }
+
+  function proxyLink(){
+    return 'tg://proxy?server=127.0.0.1&port=' + settings.port + '&secret=dd' + settings.secret;
+  }
+
+  function updateLink(){
+    els.linkText.textContent = settings.secret
+      ? 'tg://proxy?server=127.0.0.1&port=' + settings.port + '&secret=dd' + settings.secret.slice(0,8) + '…'
+      : 'tg://proxy?…';
+  }
+
+  function render(){
+    var running = !!state.running;
+    var error = state.error || '';
+    var status = state.status || '';
+
+    els.orb.classList.toggle('on', running);
+    els.toggleBtn.classList.toggle('on', running);
+    els.toggleBtn.setAttribute('aria-pressed', running ? 'true' : 'false');
+    els.btnApply.disabled = !running;
+
+    var title = 'Прокси остановлен';
+    var sub = '127.0.0.1:' + (running ? state.port : settings.port);
+
+    if (running) {
+      title = 'Прокси работает';
+      sub = '127.0.0.1:' + state.port + ' · dd' + (state.secret || settings.secret).slice(0,6) + '…';
+      els.heroHint.style.display = 'none';
+      setLabel('Остановить');
+    } else if (status.indexOf('Запуск') === 0) {
+      title = 'Запуск…'; sub = 'поднимаю Python-ядро'; els.heroHint.textContent = 'секунду…';
+      setLabel('Запуск…');
+    } else if (status.indexOf('Остановка') === 0) {
+      title = 'Остановка…'; sub = 'закрываю сокеты'; els.heroHint.textContent = 'секунду…';
+      setLabel('Остановка…');
+    } else if (error) {
+      title = 'Ошибка запуска';
+      sub = error.length > 90 ? error.slice(0, 90) + '…' : error;
+      els.heroHint.textContent = 'смотрите логи';
+      setLabel('Повторить');
+    } else {
+      els.heroHint.style.display = '';
+      els.heroHint.textContent = 'нажмите кнопку ниже';
+      setLabel('Запустить');
+    }
+
+    els.heroTitle.textContent = title;
+    els.heroSub.textContent = sub;
+  }
+
+  function renderLogs(){
+    var out = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var cls = 'i';
+      if (/\bERROR\b|Traceback|!!!/.test(line)) cls = 'e';
+      else if (/\bWARNING\b/.test(line)) cls = 'w';
+      if (filter === 'err' && cls !== 'e') continue;
+      if (filter === 'info' && cls === 'e') continue;
+      out.push('<span class="' + cls + '">' + escapeHtml(line) + '</span>');
+    }
+    els.logCount.textContent = lines.length;
+    var atBottom = els.logView.scrollTop + els.logView.clientHeight >= els.logView.scrollHeight - 30;
+    els.logView.innerHTML = out.length ? out.join('\n') : (lines.length ? 'Нет строк для этого фильтра' : 'Логи появятся после запуска прокси…');
+    if (atBottom) els.logView.scrollTop = els.logView.scrollHeight;
+  }
+
+  function validate(){
+    var port = parseInt(els.inPort.value, 10);
+    if (!port || port < 1 || port > 65535) return 'Порт должен быть от 1 до 65535';
+    var secret = (els.inSecret.value || '').trim().toLowerCase();
+    if (!/^[0-9a-f]{32}$/.test(secret)) return 'Secret должен быть 32 hex-символа';
+    return null;
+  }
+
+  function startProxy(){
+    call('startProxy', settings.port, settings.secret, settings.noH2, settings.dcIp);
+  }
+
+  function toggleProxy(){
+    if (state.running) {
+      call('stopProxy');
+      toast('Останавливаю прокси…');
+      return;
+    }
+    var err = validate();
+    if (err) { toast(err); return; }
+    persist();
+    startProxy();
+    burst();
+    els.heroTitle.textContent = 'Запуск…';
+    els.heroHint.textContent = 'секунду…';
+    toast('Запускаю прокси…');
+  }
+
+  function syncBgSeg(){
+    Array.prototype.forEach.call(els.bgSeg.querySelectorAll('button'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-mode') === settings.bgMode);
+    });
+    els.percentRow.classList.toggle('show', settings.bgMode === 'percent');
+    els.percentRange.value = settings.bgPercent;
+    els.percentVal.textContent = settings.bgPercent + '%';
+  }
+
+  function syncDcSeg(){
+    var parts = (els.inDc.value || '').trim().split(/[\s,]+/).filter(Boolean);
+    var idx = parts.length > 1 ? 1 : (parts.length === 1 ? 0 : 2);
+    Array.prototype.forEach.call(els.dcSeg.querySelectorAll('button'), function(b, i){
+      b.classList.toggle('active', i === idx);
+    });
+  }
+
+  function tick(){
+    var s = parse(call('getState'), null);
+    if (s) {
+      var was = state.running;
+      state = { running: !!s.running, status: s.status || '', error: s.error || '', port: s.port || 1443, secret: s.secret || '' };
+      render();
+      if (was !== state.running && state.running) toast('Прокси запущен на 127.0.0.1:' + state.port);
+      if (state.error && state.error !== lastError) { lastError = state.error; toast(state.error.slice(0, 120)); }
+      if (!state.error) lastError = '';
+    }
+    if (!autoTried) {
+      autoTried = true;
+      if (settings.autostart && !state.running) {
+        setTimeout(function(){
+          if (!state.running && !validate()) {
+            persist();
+            startProxy();
+            toast('Автозапуск прокси…');
+          }
+        }, 600);
+      }
+    }
+    var text = call('getLogs') || '';
+    if (text !== lines.join('\n')) {
+      lines = text.split('\n').filter(function(l){ return l.length; });
+      renderLogs();
+    }
+  }
+
+  /* --- док: свайп вверх открыть, вниз закрыть, автоскрытие по простою --- */
+  var startY = null, dragging = false, touching = false, dockTimer = null;
+  var DOCK_IDLE_MS = 9000;
+
+  function scheduleDockClose(ms){
+    clearTimeout(dockTimer);
+    dockTimer = setTimeout(function(){
+      if (touching) { scheduleDockClose(ms); return; }
+      closeDock();
+    }, ms || DOCK_IDLE_MS);
+  }
+
+  function openDock(autoClose){
+    els.dock.classList.add('open');
+    if (autoClose !== false) scheduleDockClose();
+  }
+
+  function closeDock(){
+    clearTimeout(dockTimer);
+    dockTimer = null;
+    els.dock.classList.remove('open');
+  }
+
+  els.dock.addEventListener('touchstart', function(e){
+    if (!e.touches.length) return;
+    startY = e.touches[0].clientX;
+    dragging = true;
+    touching = true;
+    clearTimeout(dockTimer);
+  }, {passive:true});
+
+  els.dock.addEventListener('touchmove', function(e){
+    if (!dragging || !e.touches.length) return;
+    clearTimeout(dockTimer);
+    var dx = e.touches[0].clientX - startY;
+    if (dx > 10) els.dock.classList.add('open');
+    if (dx < -10) closeDock();
+  }, {passive:true});
+
+  els.dock.addEventListener('touchend', function(){
+    dragging = false;
+    touching = false;
+    startY = null;
+    if (els.dock.classList.contains('open')) scheduleDockClose();
+  });
+
+  els.dock.addEventListener('touchcancel', function(){
+    dragging = false;
+    touching = false;
+    if (els.dock.classList.contains('open')) scheduleDockClose();
+  });
+
+  els.dockHandle.addEventListener('click', function(){
+    if (els.dock.classList.contains('open')) closeDock(); else openDock();
+  });
+
+  els.toggleBtn.addEventListener('click', toggleProxy);
+  els.btnApply.addEventListener('click', function(){
+    var err = validate();
+    if (err) { toast(err); return; }
+    persist();
+    call('openTelegram', settings.port, settings.secret);
+  });
+  els.btnCopyLink.addEventListener('click', function(){ call('copyText', proxyLink()); toast('Ссылка скопирована'); });
+  els.btnRegen.addEventListener('click', function(){
+    var fresh = (call('generateSecret') || '').toLowerCase();
+    if (!fresh) return;
+    els.inSecret.value = fresh;
+    persist();
+    toast('Ключ обновлён');
+  });
+  els.swH2.addEventListener('click', function(){
+    setSwitch(els.swH2, !els.swH2.classList.contains('on'));
+    persist();
+  });
+  els.swAuto.addEventListener('click', function(){
+    setSwitch(els.swAuto, !els.swAuto.classList.contains('on'));
+    persist();
+    toast(els.swAuto.classList.contains('on') ? 'Автозапуск включён' : 'Автозапуск выключен');
+  });
+  els.bgSeg.querySelectorAll('button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      settings.bgMode = btn.getAttribute('data-mode');
+      syncBgSeg();
+      persist();
+    });
+  });
+  els.percentRange.addEventListener('input', function(){
+    settings.bgPercent = parseInt(els.percentRange.value, 10) || 15;
+    els.percentVal.textContent = settings.bgPercent + '%';
+    persist();
+  });
+
+  els.inPort.addEventListener('change', persist);
+  els.inSecret.addEventListener('change', persist);
+  els.inDc.addEventListener('change', function(){ persist(); syncDcSeg(); });
+  els.btnBattery.addEventListener('click', function(){ call('requestBattery'); });
+  els.btnCopyLogs.addEventListener('click', function(){ call('copyText', lines.join('\n')); toast('Лог скопирован'); });
+  els.btnClearLogs.addEventListener('click', function(){ call('clearLogs'); lines = []; renderLogs(); toast('Лог очищен'); });
+  els.btnGithub.addEventListener('click', function(){ call('openUrl', 'https://github.com/Flowseal/tg-ws-proxy'); });
+  els.btnTgChannel.addEventListener('click', function(){ call('openUrl', 'https://t.me/EXESTOR'); });
+
+  els.dcSeg.querySelectorAll('button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var v = btn.getAttribute('data-dc');
+      els.dcSeg.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      if (v !== '') { els.inDc.value = v; persist(); }
+    });
+  });
+
+  els.logSeg.querySelectorAll('button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      els.logSeg.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      filter = btn.getAttribute('data-filter');
+      renderLogs();
+    });
+  });
+
+  document.querySelectorAll('.dock-items button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.dock-items button').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      var name = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+      var tab = document.getElementById('tab-' + name);
+      if (tab) tab.classList.add('active');
+      document.querySelector('main').scrollTop = 0;
+      scheduleDockClose();
+    });
+  });
+
+  loadSettings();
+  render();
+  tick();
+  setTimeout(function(){ openDock(); }, 400);
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>

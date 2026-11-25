@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2f3f5">
+<title>TgWsProxy19</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:#f2f3f5;color:#1f2937;overflow:hidden;position:relative;-webkit-font-smoothing:antialiased}
+
+/* фон как в памятке */
+.gradient-bg{position:fixed;inset:0;z-index:-2;overflow:hidden;background:#f2f3f5}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);animation:moveBlob 35s linear infinite;opacity:.9}
+.blob-1{width:750px;height:750px;background:rgba(199,194,182,.85);box-shadow:0 0 160px rgba(199,194,182,.7);top:-15%;left:-10%;animation-duration:30s;animation-delay:-3s}
+.blob-2{width:850px;height:850px;background:rgba(215,212,204,.8);box-shadow:0 0 160px rgba(199,194,182,.6);bottom:-20%;right:-10%;animation-duration:38s;animation-delay:-12s}
+.blob-3{width:550px;height:550px;background:rgba(199,194,182,.7);box-shadow:0 0 140px rgba(199,194,182,.55);top:40%;left:50%;animation-duration:42s;animation-delay:-21s}
+@keyframes moveBlob{0%{transform:translate(0,0) scale(1)}25%{transform:translate(80px,70px) scale(1.15)}50%{transform:translate(0,140px) scale(1)}75%{transform:translate(-80px,70px) scale(.9)}100%{transform:translate(0,0) scale(1)}}
+.grid-background{position:fixed;top:-50%;left:-50%;width:200%;height:200%;z-index:-1;background-image:linear-gradient(to right,rgba(199,194,182,.12) 1px,transparent 1px),linear-gradient(to bottom,rgba(199,194,182,.12) 1px,transparent 1px);background-size:50px 50px;animation:gridMove 25s linear infinite;animation-delay:-7s}
+@keyframes gridMove{0%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(40px,-40px) rotate(1deg)}100%{transform:translate(0,0) rotate(0deg)}}
+
+/* каркас */
+.app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;max-width:640px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:20px 18px 10px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:44px;height:44px;border-radius:14px;flex:0 0 auto;display:grid;place-items:center;
+  background:linear-gradient(135deg,#c7c2b6,#94a3b8,#64748b);box-shadow:0 6px 16px rgba(100,116,139,.28)}
+.logo svg{width:21px;height:21px;fill:#fff}
+h1{font-size:22px;font-weight:800;letter-spacing:-.5px;line-height:1.1;
+  background:linear-gradient(270deg,#475569,#0f172a,#64748b,#475569);background-size:300% 300%;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:textGradientShift 6s linear infinite}
+@keyframes textGradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.brand p{font-size:11px;color:#64748b;font-weight:500;margin-top:2px}
+.pill{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #e2e8f0;border-radius:999px;
+  padding:7px 12px;font-size:11.5px;font-weight:600;color:#64748b;box-shadow:0 2px 8px rgba(15,23,42,.05);white-space:nowrap}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:#94a3b8}
+.pill.on{color:#047857;border-color:#a7f3d0;background:#ecfdf5}
+.pill.on .dot{background:#10b981}
+.pill.err{color:#b91c1c;border-color:#fecaca;background:#fef2f2}
+.pill.err .dot{background:#ef4444}
+
+main{flex:1;overflow-y:auto;padding:6px 16px 96px;scrollbar-width:none}
+main::-webkit-scrollbar{display:none}
+.tab{display:none}
+.tab.active{display:block;animation:fadeUp .28s cubic-bezier(.16,1,.3,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.card{background:#fff;border:1px solid #e8ecf1;border-radius:20px;padding:20px;margin-bottom:14px;
+  box-shadow:0 15px 35px rgba(15,23,42,.045),0 4px 14px rgba(199,194,182,.16)}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.badge{width:36px;height:36px;border-radius:11px;flex:0 0 auto;display:grid;place-items:center;
+  background:linear-gradient(135deg,#c7c2b6,#94a3b8,#64748b);box-shadow:0 4px 12px rgba(199,194,182,.5)}
+.badge svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.card-head h2{font-size:16px;font-weight:700;color:#0f172a}
+.card-head .spacer{flex:1}
+.badge-soft{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700}
+
+/* герой */
+.hero{text-align:center;padding:24px 20px 20px}
+.orb{width:132px;height:132px;border-radius:50%;border:0;cursor:pointer;margin:2px auto 16px;display:grid;place-items:center;
+  background:linear-gradient(150deg,#f3f5f8,#e4e9ef 55%,#c9d2dd);
+  box-shadow:0 18px 34px rgba(100,116,139,.20),inset 0 2px 2px rgba(255,255,255,.85);
+  transition:transform .15s ease,background .3s ease,box-shadow .3s ease}
+.orb:active{transform:scale(.96)}
+.orb svg{width:52px;height:52px;fill:#475569;transform:translate(1px,1.5px);transition:fill .3s ease;
+  filter:drop-shadow(0 4px 8px rgba(15,23,42,.14))}
+.orb.on{background:linear-gradient(150deg,#cbd5e1,#94a3b8 55%,#64748b);
+  box-shadow:0 18px 34px rgba(100,116,139,.40),inset 0 2px 2px rgba(255,255,255,.6)}
+.orb.on svg{fill:#fff;filter:drop-shadow(0 6px 10px rgba(15,23,42,.3))}
+.hero h2{font-size:21px;font-weight:800;letter-spacing:-.3px}
+.hero .sub{margin-top:5px;font-size:13px;color:#64748b;font-weight:500}
+.hero .hint{margin-top:8px;font-size:11px;color:#94a3b8;font-weight:500}
+
+.btn{width:100%;border:0;border-radius:14px;height:52px;font-size:15px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s ease,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{margin-top:18px;color:#fff;background:linear-gradient(135deg,#94a3b8,#64748b 60%,#334155);
+  box-shadow:0 10px 24px rgba(51,65,85,.25)}
+.btn.soft{margin-top:8px;background:#fff;color:#334155;border:1px solid #dbe2ea;box-shadow:0 2px 8px rgba(15,23,42,.05)}
+.btn.ghost{margin-top:10px;height:44px;font-size:13.5px;background:#f8fafc;color:#475569;border:1px solid #e2e8f0}
+.btn[disabled]{opacity:.5;pointer-events:none}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:16px}
+.chip{background:#f8fafc;border:1px solid #e8ecf1;border-radius:999px;padding:6px 10px;font-size:11px;color:#64748b;font-weight:600}
+.chip b{color:#0f172a}
+.link-row{display:flex;align-items:center;gap:8px;margin-top:14px;background:#f8fafc;border:1px solid #e8ecf1;border-radius:12px;padding:9px 10px}
+.link-row code{flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:#475569;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.copy{border:1px solid #e2e8f0;background:#fff;border-radius:9px;padding:6px 10px;font-size:11px;font-weight:700;color:#475569;cursor:pointer}
+.copy:active{background:#f1f5f9}
+
+/* настройки */
+.lbl{display:block;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;margin:14px 0 7px}
+.input{width:100%;height:46px;border:1px solid #dbe2ea;border-radius:12px;background:#f8fafc;padding:0 13px;
+  font-size:14px;color:#0f172a;font-weight:600;outline:none;transition:border-color .2s,background .2s}
+.input:focus{border-color:#94a3b8;background:#fff}
+.input.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;letter-spacing:.02em}
+.row{display:flex;gap:8px;align-items:center}
+.row .input{flex:1;min-width:0}
+.iconbtn{flex:0 0 auto;width:46px;height:46px;border-radius:12px;border:1px solid #dbe2ea;background:#fff;cursor:pointer;display:grid;place-items:center}
+.iconbtn:active{background:#f1f5f9}
+.iconbtn svg{width:17px;height:17px;fill:none;stroke:#475569;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+.seg{display:flex;gap:6px}
+.seg button{flex:1;border:1px solid #e2e8f0;background:#f8fafc;border-radius:11px;padding:11px 4px;
+  font-size:12px;font-weight:700;color:#64748b;cursor:pointer;transition:.18s}
+.seg button.active{background:#334155;border-color:#334155;color:#fff}
+
+.switch-row{display:flex;align-items:center;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid #eef2f7}
+.switch-row .t{font-size:14px;font-weight:700;color:#0f172a}
+.switch-row .s{font-size:11.5px;color:#94a3b8;margin-top:2px}
+.switch-row .spacer{flex:1}
+.switch{width:52px;height:30px;border-radius:999px;background:#e2e8f0;border:0;position:relative;cursor:pointer;transition:background .22s}
+.switch i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;
+  box-shadow:0 2px 6px rgba(15,23,42,.25);transition:transform .22s cubic-bezier(.2,.9,.3,1.2)}
+.switch.on{background:#334155}
+.switch.on i{transform:translateX(22px)}
+
+/* логи */
+.logs{height:min(40vh,320px);overflow-y:auto;background:#0f172a;border-radius:14px;padding:12px;margin-top:4px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;line-height:1.6;color:#a7f3d0;
+  white-space:pre-wrap;word-break:break-word;scrollbar-width:none}
+.logs::-webkit-scrollbar{display:none}
+.logs .e{color:#fda4af}.logs .w{color:#fcd34d}.logs .i{color:#a7f3d0}
+
+/* инфо */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.tile{background:#f8fafc;border:1px solid #e8ecf1;border-radius:14px;padding:13px}
+.tile .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;font-weight:700}
+.tile .v{font-size:12.5px;font-weight:700;color:#334155;margin-top:5px}
+.about{font-size:13.5px;line-height:1.65;color:#475569}
+.notice{margin-top:14px;background:rgba(199,194,182,.18);border:1px solid rgba(199,194,182,.4);border-radius:12px;padding:13px 14px}
+.notice h3{font-size:12.5px;color:#0f172a;margin-bottom:6px}
+.notice p{font-size:12.5px;line-height:1.55;color:#475569}
+.notice li{list-style:none;position:relative;padding-left:18px;font-size:12.5px;line-height:1.55;color:#475569;margin-top:5px}
+.notice li::before{content:'→';position:absolute;left:0;color:#64748b;font-weight:700}
+
+/* навигация */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(255,255,255,.96);border-top:1px solid #e8ecf1;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;gap:4px;max-width:640px;margin:0 auto;
+  box-shadow:0 -6px 24px rgba(15,23,42,.05)}
+.nav button{flex:1;border:0;background:transparent;padding:6px 2px;border-radius:12px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8;font-size:10px;font-weight:700}
+.nav button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nav button.active{color:#1e293b;background:#f1f5f9}
+
+.toast{position:fixed;left:50%;bottom:84px;transform:translate(-50%,10px);z-index:50;background:#0f172a;color:#fff;
+  padding:11px 16px;border-radius:12px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.22s;max-width:86vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="gradient-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+<div class="grid-background"></div>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24"><path d="M21.9 3.1c.3-.9-.6-1.7-1.5-1.4L2.7 8.6c-1 .3-1.1 1.7-.1 2.1l4.6 1.8 1.7 5.6c.2.8 1.3 1 1.8.3l2.4-3.1 4.6 3.4c.7.5 1.7.1 1.9-.7l3.3-15z"/></svg></div>
+      <div><h1>TgWsProxy19</h1><p>локальный MTProto-прокси</p></div>
+    </div>
+    <div class="pill" id="pill"><span class="dot"></span><span id="pillText">остановлен</span></div>
+  </header>
+
+  <main>
+    <section class="tab active" id="tab-proxy">
+      <div class="card hero">
+        <button class="orb" id="orbBtn" aria-label="Запустить прокси">
+          <svg viewBox="0 0 24 24"><path d="M21.9 3.1c.3-.9-.6-1.7-1.5-1.4L2.7 8.6c-1 .3-1.1 1.7-.1 2.1l4.6 1.8 1.7 5.6c.2.8 1.3 1 1.8.3l2.4-3.1 4.6 3.4c.7.5 1.7.1 1.9-.7l3.3-15z"/></svg>
+        </button>
+        <h2 id="heroTitle">Прокси остановлен</h2>
+        <p class="sub" id="heroSub">127.0.0.1:1445</p>
+        <p class="hint" id="orbHint">нажмите на круг, чтобы запустить</p>
+
+        <button class="btn soft" id="btnApply">
+          <svg viewBox="0 0 24 24"><path d="M21 3L10.5 13.5"/><path d="M21 3l-7 18-3.5-7.5L3 10z"/></svg>
+          Применить в Telegram
+        </button>
+
+        <div class="chips">
+          <span class="chip">CF <b>авто</b></span>
+          <span class="chip">Порт <b id="chipPort">1445</b></span>
+          <span class="chip">H2 <b id="chipH2">off</b></span>
+          <span class="chip">DC <b id="chipDc">4</b></span>
+        </div>
+
+        <div class="link-row">
+          <code id="linkText">tg://proxy?…</code>
+          <button class="copy" id="btnCopyLink">копировать</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.5"/></svg></div>
+          <h2>Как пользоваться</h2>
+        </div>
+        <p class="about">Нажмите на круг, чтобы поднять прокси на 127.0.0.1. Затем «Применить в Telegram» — ссылка откроет клиент и добавит прокси автоматически.</p>
+        <div class="notice">
+          <h3>Если не подключается</h3>
+          <ul>
+            <li>Проверьте, что порт свободен (1443 любит занимать другое приложение).</li>
+            <li>Разрешите работу в фоне, иначе система остановит сервис.</li>
+            <li>Логи на вкладке «Логи» покажут причину ошибки.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-settings">
+      <div class="card">
+        <div class="card-head">
+          <div class="badge"><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M2 12h20"/></svg></div>
+          <h2>Подключение</h2>
+        </div>
+
+        <label class="lbl">Порт</label>
+        <input class="input" id="inPort" type="number" inputmode="numeric" min="1" max="65535" value="1443">
+
+        <label class="lbl">Секретный ключ</label>
+        <div class="row">
+          <input class="input mono" id="inSecret" type="text" spellcheck="false" autocomplete="off" placeholder="32 hex">
+          <button class="iconbtn" id="btnRegen" aria-label="Новый ключ">
+            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+          </button>
+        </div>
+
+        <label class="lbl">Привязка DC</label>
+        <div class="seg" id="dcSeg">
+          <button data-dc="4:149.154.167.220">DC 4</button>
+          <button data-dc="2:149.154.167.220 4:149.154.167.220">DC 2+4</button>
+          <button data-dc="">Свой</button>
+        </div>
+        <input class="input mono" id="inDc" type="text" spellcheck="false" placeholder="4:149.154.167.220" style="margin-top:8px">
+
+        <div class="switch-row">
+          <div>
+            <div class="t">Отключить HTTP/2</div>
+            <div class="s">флаг --no-h2</div>
+          </div>
+          <div class="spacer"></div>
+          <button class="switch on" id="swH2" role="switch" aria-checked="true"><i></i></button>
+        </div>
+
+        <div class="switch-row">
+          <div>
+            <div class="t">Автозапуск</div>
+            <div class="s">стартовать при открытии приложения</div>
+          </div>
+          <div class="spacer"></div>
+          <button class="switch on" id="swAuto" role="switch" aria-checked="true"><i></i></button>
+        </div>
+
+        <button class="btn ghost" id="btnBattery">Разрешить работу в фоне</button>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-logs">
+      <div class="card">
+        <div class="card-head">
+          <div class="badge"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M7 9l3 3-3 3"/><path d="M13 15h4"/></svg></div>
+          <h2>Лог событий</h2>
+          <div class="spacer"></div>
+          <span class="badge-soft" id="logCount">0</span>
+        </div>
+        <div class="seg" id="logSeg">
+          <button class="active" data-filter="all">Все</button>
+          <button data-filter="info">Info</button>
+          <button data-filter="err">Error</button>
+        </div>
+        <pre class="logs" id="logView">Логи появятся после запуска прокси…</pre>
+        <div class="row" style="margin-top:10px">
+          <button class="btn ghost" id="btnCopyLogs" style="margin-top:0">Скопировать</button>
+          <button class="btn ghost" id="btnClearLogs" style="margin-top:0">Очистить</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-info">
+      <div class="card">
+        <div class="card-head">
+          <div class="badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.5"/></svg></div>
+          <h2>О приложении</h2>
+        </div>
+        <p class="about">TgWsProxy19 — обёртка над консольным tg-ws-proxy (Flowseal). Python-ядро работает через Chaquopy, foreground-сервис держит WakeLock, трафик идёт через Cloudflare WebSocket.</p>
+        <div class="info-grid">
+          <div class="tile"><div class="k">Версия</div><div class="v" id="infoVersion">1.0</div></div>
+          <div class="tile"><div class="k">Пакет</div><div class="v">com.tgwsproxy19</div></div>
+          <div class="tile"><div class="k">Ядро</div><div class="v">Python 3.12</div></div>
+          <div class="tile"><div class="k">ABI</div><div class="v">arm64-v8a</div></div>
+        </div>
+        <button class="btn ghost" id="btnGithub" style="margin-top:14px">Исходники на GitHub</button>
+        <button class="btn primary" id="btnTgChannel" style="margin-top:10px">
+          <svg viewBox="0 0 24 24"><path d="M21.9 3.1c.3-.9-.6-1.7-1.5-1.4L2.7 8.6c-1 .3-1.1 1.7-.1 2.1l4.6 1.8 1.7 5.6c.2.8 1.3 1 1.8.3l2.4-3.1 4.6 3.4c.7.5 1.7.1 1.9-.7l3.3-15z"/></svg>
+          Мой Telegram-канал @EXESTOR
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="nav">
+    <button class="active" data-tab="proxy">
+      <svg viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M6.6 6.6a8 8 0 1 0 10.8 0"/></svg>Прокси
+    </button>
+    <button data-tab="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9 2 2 0 1 1-2.8 2.8 1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5 2 2 0 1 1-4 0 1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3 2 2 0 1 1-2.8-2.8 1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1 2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9 2 2 0 1 1 2.8-2.8 1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5 2 2 0 1 1 4 0 1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3 2 2 0 1 1 2.8 2.8 1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1 2 2 0 1 1 0 4 1.7 1.7 0 0 0-1.5 1z"/></svg>Настройки
+    </button>
+    <button data-tab="logs">
+      <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M7 9l3 3-3 3"/><path d="M13 15h4"/></svg>Логи
+    </button>
+    <button data-tab="info">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.5"/></svg>Инфо
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var A = window.Android;
+  var $ = function(id){ return document.getElementById(id); };
+
+  var els = {
+    pill:$('pill'), pillText:$('pillText'),
+    orb:$('orbBtn'), heroTitle:$('heroTitle'), heroSub:$('heroSub'), orbHint:$('orbHint'),
+    btnApply:$('btnApply'), btnCopyLink:$('btnCopyLink'), linkText:$('linkText'),
+    chipPort:$('chipPort'), chipH2:$('chipH2'), chipDc:$('chipDc'),
+    inPort:$('inPort'), inSecret:$('inSecret'), inDc:$('inDc'), swH2:$('swH2'),
+    btnRegen:$('btnRegen'), btnBattery:$('btnBattery'), dcSeg:$('dcSeg'),
+    logView:$('logView'), logSeg:$('logSeg'), logCount:$('logCount'),
+    btnCopyLogs:$('btnCopyLogs'), btnClearLogs:$('btnClearLogs'),
+    btnGithub:$('btnGithub'), btnTgChannel:$('btnTgChannel'), swAuto:$('swAuto'),
+    infoVersion:$('infoVersion'), toast:$('toast')
+  };
+
+  var state = { running:false, status:'', error:'', port:1443, secret:'' };
+  var settings = { port:1443, secret:'', noH2:true, dcIp:'4:149.154.167.220', autostart:true };
+  var filter = 'all';
+  var lines = [];
+  var lastError = '';
+  var toastTimer = null;
+
+  function call(name){
+    if (!A || !A[name]) return null;
+    try {
+      return A[name].apply(A, Array.prototype.slice.call(arguments, 1));
+    } catch(e){ return null; }
+  }
+  function parse(json, fallback){
+    try { return JSON.parse(json || '') || fallback; } catch(e){ return fallback; }
+  }
+  function toast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 2300);
+  }
+  function escapeHtml(text){
+    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function loadSettings(){
+    var s = parse(call('getSettings'), {});
+    settings.port = s.port || 1443;
+    settings.secret = (s.secret || '').toLowerCase();
+    settings.noH2 = (s.noH2 !== false);
+    settings.dcIp = s.dcIp || '4:149.154.167.220';
+    settings.autostart = (s.autostart !== false);
+    if (!settings.secret) settings.secret = (call('generateSecret') || '').toLowerCase();
+    els.inPort.value = settings.port;
+    els.inSecret.value = settings.secret;
+    els.inDc.value = settings.dcIp;
+    setSwitch(settings.noH2);
+    els.swAuto.classList.toggle('on', settings.autostart);
+    var v = call('version') || '1.0';
+    els.infoVersion.textContent = v;
+    persist();
+    syncDcSeg();
+  }
+
+  function persist(){
+    settings.port = parseInt(els.inPort.value, 10) || 1443;
+    settings.secret = (els.inSecret.value || '').trim().toLowerCase();
+    settings.noH2 = els.swH2.classList.contains('on');
+    settings.dcIp = (els.inDc.value || '').trim();
+    call('saveSettings', settings.port, settings.secret, settings.noH2, settings.dcIp);
+    updateChips();
+    updateLink();
+  }
+
+  function setSwitch(on){
+    els.swH2.classList.toggle('on', !!on);
+    els.swH2.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+
+  function dcLabel(){
+    var first = (settings.dcIp || '').trim().split(/[\s,]+/)[0] || '';
+    var m = first.match(/^(\d+):/);
+    return m ? m[1] : '—';
+  }
+
+  function updateChips(){
+    els.chipPort.textContent = settings.port;
+    els.chipH2.textContent = settings.noH2 ? 'off' : 'on';
+    els.chipDc.textContent = dcLabel();
+  }
+
+  function proxyLink(){
+    return 'tg://proxy?server=127.0.0.1&port=' + settings.port + '&secret=dd' + settings.secret;
+  }
+
+  function updateLink(){
+    els.linkText.textContent = settings.secret
+      ? 'tg://proxy?server=127.0.0.1&port=' + settings.port + '&secret=dd' + settings.secret.slice(0,8) + '…'
+      : 'tg://proxy?…';
+  }
+
+  function render(){
+    var running = !!state.running;
+    var error = state.error || '';
+    var status = state.status || '';
+
+    els.orb.classList.toggle('on', running);
+    els.orbHint.textContent = running ? 'нажмите, чтобы остановить' : 'нажмите на круг, чтобы запустить';
+    els.btnApply.disabled = !running;
+
+    var title = 'Прокси остановлен';
+    var sub = '127.0.0.1:' + (running ? state.port : settings.port);
+    var cls = '';
+    var label = 'остановлен';
+
+    if (running) {
+      title = 'Прокси работает';
+      sub = '127.0.0.1:' + state.port + ' · dd' + (state.secret || settings.secret).slice(0,6) + '…';
+      cls = 'on'; label = 'работает';
+    } else if (status.indexOf('Запуск') === 0) {
+      title = 'Запуск…'; sub = 'поднимаю Python-ядро'; label = 'запуск';
+    } else if (status.indexOf('Остановка') === 0) {
+      title = 'Остановка…'; sub = 'закрываю сокеты'; label = 'остановка';
+    } else if (error) {
+      title = 'Ошибка запуска';
+      sub = error.length > 90 ? error.slice(0, 90) + '…' : error;
+      cls = 'err'; label = 'ошибка';
+    }
+
+    els.heroTitle.textContent = title;
+    els.heroSub.textContent = sub;
+    els.pill.className = 'pill ' + cls;
+    els.pillText.textContent = label;
+  }
+
+  function renderLogs(){
+    var out = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var cls = 'i';
+      if (/\bERROR\b|Traceback|!!!/.test(line)) cls = 'e';
+      else if (/\bWARNING\b/.test(line)) cls = 'w';
+      if (filter === 'err' && cls !== 'e') continue;
+      if (filter === 'info' && cls === 'e') continue;
+      out.push('<span class="' + cls + '">' + escapeHtml(line) + '</span>');
+    }
+    els.logCount.textContent = lines.length;
+    var atBottom = els.logView.scrollTop + els.logView.clientHeight >= els.logView.scrollHeight - 30;
+    els.logView.innerHTML = out.length ? out.join('\n') : (lines.length ? 'Нет строк для этого фильтра' : 'Логи появятся после запуска прокси…');
+    if (atBottom) els.logView.scrollTop = els.logView.scrollHeight;
+  }
+
+  function validate(){
+    var port = parseInt(els.inPort.value, 10);
+    if (!port || port < 1 || port > 65535) return 'Порт должен быть от 1 до 65535';
+    var secret = (els.inSecret.value || '').trim().toLowerCase();
+    if (!/^[0-9a-f]{32}$/.test(secret)) return 'Secret должен быть 32 hex-символа';
+    return null;
+  }
+
+  function toggleProxy(){
+    if (state.running) {
+      call('stopProxy');
+      toast('Останавливаю прокси…');
+      return;
+    }
+    var err = validate();
+    if (err) { toast(err); return; }
+    persist();
+    call('startProxy', settings.port, settings.secret, settings.noH2, settings.dcIp);
+    els.heroTitle.textContent = 'Запуск…';
+    els.pill.className = 'pill';
+    els.pillText.textContent = 'запуск';
+    toast('Запускаю прокси…');
+  }
+
+  var autoTried = false;
+
+  function tick(){
+    var s = parse(call('getState'), null);
+    if (s) {
+      var was = state.running;
+      state = { running: !!s.running, status: s.status || '', error: s.error || '', port: s.port || 1443, secret: s.secret || '' };
+      render();
+      if (was !== state.running && state.running) toast('Прокси запущен на 127.0.0.1:' + state.port);
+      if (state.error && state.error !== lastError) { lastError = state.error; toast(state.error.slice(0, 120)); }
+      if (!state.error) lastError = '';
+    }
+    if (!autoTried) {
+      autoTried = true;
+      if (settings.autostart && !state.running) {
+        setTimeout(function(){
+          if (!state.running && !validate()) {
+            persist();
+            call('startProxy', settings.port, settings.secret, settings.noH2, settings.dcIp);
+            toast('Автозапуск прокси…');
+          }
+        }, 600);
+      }
+    }
+
+    var text = call('getLogs') || '';
+    if (text !== lines.join('\n')) {
+      lines = text.split('\n').filter(function(l){ return l.length; });
+      renderLogs();
+    }
+  }
+
+  function syncDcSeg(){
+    var parts = (els.inDc.value || '').trim().split(/[\s,]+/).filter(Boolean);
+    var idx = parts.length > 1 ? 1 : (parts.length === 1 ? 0 : 2);
+    Array.prototype.forEach.call(els.dcSeg.querySelectorAll('button'), function(b, i){
+      b.classList.toggle('active', i === idx);
+    });
+  }
+
+  els.orb.addEventListener('click', toggleProxy);
+  els.btnApply.addEventListener('click', function(){
+    var err = validate();
+    if (err) { toast(err); return; }
+    persist();
+    call('openTelegram', settings.port, settings.secret);
+  });
+  els.btnCopyLink.addEventListener('click', function(){ call('copyText', proxyLink()); toast('Ссылка скопирована'); });
+  els.btnRegen.addEventListener('click', function(){
+    var fresh = (call('generateSecret') || '').toLowerCase();
+    if (!fresh) return;
+    els.inSecret.value = fresh;
+    persist();
+    toast('Ключ обновлён');
+  });
+  els.swH2.addEventListener('click', function(){ setSwitch(!els.swH2.classList.contains('on')); persist(); });
+  els.inPort.addEventListener('change', persist);
+  els.inSecret.addEventListener('change', persist);
+  els.inDc.addEventListener('change', function(){ persist(); syncDcSeg(); });
+  els.btnBattery.addEventListener('click', function(){ call('requestBattery'); });
+  els.btnCopyLogs.addEventListener('click', function(){ call('copyText', lines.join('\n')); toast('Лог скопирован'); });
+  els.btnClearLogs.addEventListener('click', function(){ call('clearLogs'); lines = []; renderLogs(); toast('Лог очищен'); });
+  els.btnGithub.addEventListener('click', function(){ call('openUrl', 'https://github.com/Flowseal/tg-ws-proxy'); });
+  els.btnTgChannel.addEventListener('click', function(){ call('openUrl', 'https://t.me/EXESTOR'); });
+  els.swAuto.addEventListener('click', function(){
+    settings.autostart = !els.swAuto.classList.contains('on');
+    els.swAuto.classList.toggle('on', settings.autostart);
+    els.swAuto.setAttribute('aria-checked', settings.autostart ? 'true' : 'false');
+    call('setAutostart', settings.autostart);
+    toast(settings.autostart ? 'Автозапуск включён' : 'Автозапуск выключен');
+  });
+
+  els.dcSeg.querySelectorAll('button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var v = btn.getAttribute('data-dc');
+      els.dcSeg.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      if (v !== '') { els.inDc.value = v; persist(); }
+    });
+  });
+
+  els.logSeg.querySelectorAll('button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      els.logSeg.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      filter = btn.getAttribute('data-filter');
+      renderLogs();
+    });
+  });
+
+  document.querySelectorAll('.nav button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.nav button').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      var name = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+      var tab = document.getElementById('tab-' + name);
+      if (tab) tab.classList.add('active');
+      document.querySelector('main').scrollTop = 0;
+    });
+  });
+
+  loadSettings();
+  render();
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
