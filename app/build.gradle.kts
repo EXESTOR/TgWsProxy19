@@ -4,6 +4,18 @@ plugins {
     id("com.chaquo.python")
 }
 
+// armv7 (старые устройства) собирается отдельным флагом:
+//   ./gradlew assembleDebug                 -> arm64-v8a + x86_64, Python 3.12
+//   ./gradlew assembleDebug -PlegacyArm=true -> armeabi-v7a, Python 3.11
+val legacyArm = (findProperty("legacyArm") as String?)?.toBoolean() ?: false
+val pythonVersion = if (legacyArm) "3.11" else "3.12"
+val pythonBinary = if (legacyArm) {
+    "/home/exestor/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11"
+} else {
+    "/home/exestor/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12"
+}
+val targetAbis = if (legacyArm) listOf("armeabi-v7a") else listOf("arm64-v8a", "x86_64")
+
 android {
     namespace = "com.tgwsproxy19"
     compileSdk = 34
@@ -13,10 +25,10 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = if (legacyArm) "1.0-legacy" else "1.0"
 
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            abiFilters += targetAbis
         }
     }
 
@@ -42,8 +54,8 @@ android {
 
 chaquopy {
     defaultConfig {
-        version = "3.12"
-        buildPython("/home/exestor/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12")
+        version = pythonVersion
+        buildPython(pythonBinary)
         pip {
             install("cryptography==42.0.8")
             install("httpx[http2]==0.28.1")

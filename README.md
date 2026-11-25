@@ -55,6 +55,19 @@ upstream-proxy/                 локальный клон апстрима (н
    ```
    APK появится в `app/build/outputs/apk/debug/app-debug.apk`.
 
+## Сборка под старые устройства (armv7)
+
+Chaquopy не поддерживает `armeabi-v7a` для Python 3.12, поэтому legacy-сборка
+идёт на Python 3.11 (он тоже должен быть установлен на машине сборки):
+
+```
+./gradlew assembleDebug -PlegacyArm=true
+```
+
+Получится APK с `versionName = 1.0-legacy` и ABI `armeabi-v7a`
+(`app/build/outputs/apk/debug/app-debug.apk`).
+Обычная сборка без флага — `arm64-v8a` + `x86_64`, Python 3.12.
+
 ## Замечания
 
 - Chaquopy 15 собирает нативные библиотеки с выравниванием под 4 КБ, поэтому
