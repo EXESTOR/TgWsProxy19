@@ -8,7 +8,6 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.1.20-7F52FF?logo=kotlin&logoColor=white)](#)
 [![Python](https://img.shields.io/badge/Python-3.11%20%2F%203.12-3776AB?logo=python&logoColor=white)](#)
 [![Chaquopy](https://img.shields.io/badge/Chaquopy-15.0.1-2E8B57)](#)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [📥 Скачать APK](https://github.com/EXESTOR/TgWsProxy19/releases/latest) •
 [💬 Telegram-канал](https://t.me/EXESTOR)
@@ -160,9 +159,6 @@ docs/screenshots/               скриншоты для README
 
 ## Благодарности
 
-- [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) — ядро прокси (MIT);
+- [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) — ядро прокси;
 - [Chaquopy](https://chaquo.com/chaquopy/) — Python в Android.
 
-## Лицензия
-
-[MIT](LICENSE). Прокси-ядро — производная от tg-ws-proxy (MIT, © Flowseal).
