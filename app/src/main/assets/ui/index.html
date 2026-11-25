@@ -290,6 +290,7 @@ main::-webkit-scrollbar{display:none}
 .dock-items button.active{color:#fff;background:rgba(139,92,246,.18);
   border-color:rgba(196,181,253,.32)}
 
+.seg-note{margin-top:9px;font-size:11px;line-height:1.45;color:var(--dim)}
 .percent-row{margin-top:14px;display:none}
 .percent-row.show{display:block}
 .percent-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;
@@ -409,6 +410,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
           <button data-mode="percent">По процентам</button>
           <button data-mode="off">Без ограничений</button>
         </div>
+        <div class="seg-note" id="bgNote"></div>
 
         <div class="percent-row" id="percentRow">
           <div class="percent-head">
@@ -503,7 +505,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     chipPort:$('chipPort'), chipH2:$('chipH2'), chipDc:$('chipDc'),
     inPort:$('inPort'), inSecret:$('inSecret'), inDc:$('inDc'), swH2:$('swH2'), swAuto:$('swAuto'),
     btnRegen:$('btnRegen'), btnBattery:$('btnBattery'), dcSeg:$('dcSeg'),
-    bgSeg:$('bgSeg'), percentRow:$('percentRow'), percentRange:$('percentRange'), percentVal:$('percentVal'),
+    bgSeg:$('bgSeg'), bgNote:$('bgNote'), percentRow:$('percentRow'), percentRange:$('percentRange'), percentVal:$('percentVal'),
     logView:$('logView'), logSeg:$('logSeg'), logCount:$('logCount'),
     btnCopyLogs:$('btnCopyLogs'), btnClearLogs:$('btnClearLogs'),
     btnGithub:$('btnGithub'), btnTgChannel:$('btnTgChannel'), infoVersion:$('infoVersion'),
@@ -719,6 +721,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       b.classList.toggle('active', b.getAttribute('data-mode') === settings.bgMode);
     });
     els.percentRow.classList.toggle('show', settings.bgMode === 'percent');
+    if (els.bgNote) {
+      els.bgNote.textContent = settings.bgMode === 'saver'
+        ? 'Прокси остановится, когда включено энергосбережение или экран телефона выключен.'
+        : (settings.bgMode === 'percent'
+          ? 'Прокси остановится, когда заряд опустится до выбранного значения.'
+          : 'Прокси не останавливается автоматически.');
+    }
     els.percentRange.value = settings.bgPercent;
     els.percentVal.textContent = settings.bgPercent + '%';
   }

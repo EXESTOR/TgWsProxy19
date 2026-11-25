@@ -24,8 +24,8 @@ android {
         applicationId = "com.tgwsproxy19"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = if (legacyArm) "1.0-legacy" else "1.0"
+        versionCode = 2
+        versionName = if (legacyArm) "1.1-legacy" else "1.1"
 
         ndk {
             abiFilters += targetAbis

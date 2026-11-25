@@ -106,6 +106,8 @@ class ProxyForegroundService : Service() {
         }
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_BATTERY_CHANGED)
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
             addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
         }
         try {
@@ -131,7 +133,11 @@ class ProxyForegroundService : Service() {
         when (mode) {
             "saver" -> {
                 val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-                if (pm.isPowerSaveMode) stopByPolicy("включено энергосбережение")
+                if (pm.isPowerSaveMode) {
+                    stopByPolicy("включено энергосбережение")
+                } else if (!pm.isInteractive) {
+                    stopByPolicy("экран выключен")
+                }
             }
             "percent" -> {
                 val bm = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
