@@ -65,6 +65,7 @@ class ProxyForegroundService : Service() {
                 ProxyRuntime.running = true
                 ProxyRuntime.sleeping = false
                 ProxyRuntime.status = "Работает на 127.0.0.1:$port"
+                ToggleWidgetProvider.refresh(this)
                 notifyStatus("Прокси работает • 127.0.0.1:$port")
                 evaluatePowerPolicy()
             } else {
@@ -91,6 +92,7 @@ class ProxyForegroundService : Service() {
             }
             ProxyRuntime.running = false
             ProxyRuntime.status = "Остановлен"
+            ToggleWidgetProvider.refresh(this)
             ProxyRuntime.error = null
             releaseWakeLock()
             stopForegroundCompat()

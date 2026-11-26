@@ -246,6 +246,25 @@ def clear_logs():
     return ""
 
 
+def get_stats():
+    """Счётчики прокси в JSON для UI."""
+    try:
+        from proxy.stats import stats
+        data = {
+            "total": int(stats.connections_total),
+            "active": int(stats.connections_active),
+            "ws": int(stats.connections_ws),
+            "cf": int(stats.connections_cfproxy),
+            "bad": int(stats.connections_bad),
+            "up": int(stats.bytes_up),
+            "down": int(stats.bytes_down),
+        }
+        import json
+        return json.dumps(data)
+    except Exception:
+        return "{}"
+
+
 def get_logs(max_lines=300):
     try:
         limit = max(1, int(max_lines))

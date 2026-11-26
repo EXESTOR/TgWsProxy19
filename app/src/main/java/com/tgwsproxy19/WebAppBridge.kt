@@ -109,6 +109,22 @@ class WebAppBridge(
     }
 
     @JavascriptInterface
+    fun getStats(): String = PyBridge.stats()
+
+    /** Пробует TCP-коннект к локальному прокси. "" — порт отвечает. */
+    @JavascriptInterface
+    fun testConnection(port: Int): String {
+        return try {
+            java.net.Socket().use { socket ->
+                socket.connect(java.net.InetSocketAddress("127.0.0.1", port), 1500)
+            }
+            ""
+        } catch (e: Exception) {
+            e.message ?: "нет соединения"
+        }
+    }
+
+    @JavascriptInterface
     fun getLogs(): String = PyBridge.logs()
 
     @JavascriptInterface

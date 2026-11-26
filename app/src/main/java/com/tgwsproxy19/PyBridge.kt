@@ -63,6 +63,15 @@ object PyBridge {
         }
     }
 
+    fun stats(): String {
+        val module = runner() ?: return "{}"
+        return try {
+            module.callAttr("get_stats").toString()
+        } catch (t: Throwable) {
+            "{}"
+        }
+    }
+
     fun isRunning(): Boolean {
         val module = runner() ?: return false
         return try {

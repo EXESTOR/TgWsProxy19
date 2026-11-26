@@ -200,6 +200,7 @@ main::-webkit-scrollbar{display:none}
   box-shadow:none}
 .btn[disabled]{opacity:.45;pointer-events:none}
 
+.stats-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .chips{display:flex;flex-wrap:nowrap;gap:6px;justify-content:center;margin-top:16px}
 .chip{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:6px 9px;
   font-size:10.5px;color:var(--muted);font-weight:600;white-space:nowrap;
@@ -350,6 +351,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
           <span class="chip">DC <b id="chipDc">4</b></span>
         </div>
 
+        <button class="btn ghost" id="btnTest" style="margin-top:10px">Проверить соединение</button>
+
         <div class="link-row">
           <code id="linkText">tg://proxy?…</code>
           <button class="copy" id="btnCopyLink">копировать</button>
@@ -445,6 +448,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
           <div class="spacer"></div>
           <span class="badge-soft" id="logCount">0</span>
         </div>
+        <div class="stats-row" id="statsRow">
+          <span class="chip">Всего <b id="stTotal">0</b></span>
+          <span class="chip">Активных <b id="stActive">0</b></span>
+          <span class="chip">WS <b id="stWs">0</b></span>
+          <span class="chip">↑ <b id="stUp">0 B</b></span>
+          <span class="chip">↓ <b id="stDown">0 B</b></span>
+        </div>
+
         <div class="seg" id="logSeg">
           <button class="active" data-filter="all">Все</button>
           <button data-filter="info">Info</button>
@@ -533,6 +544,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     btnRegen:$('btnRegen'), btnBattery:$('btnBattery'), dcSeg:$('dcSeg'),
     bgSeg:$('bgSeg'), bgNote:$('bgNote'), percentRow:$('percentRow'), percentRange:$('percentRange'), percentVal:$('percentVal'),
     logView:$('logView'), logSeg:$('logSeg'), logCount:$('logCount'),
+    stTotal:$('stTotal'), stActive:$('stActive'), stWs:$('stWs'), stUp:$('stUp'), stDown:$('stDown'),
+    btnTest:$('btnTest'),
     btnCopyLogs:$('btnCopyLogs'), btnClearLogs:$('btnClearLogs'),
     btnGithub:$('btnGithub'), btnTgChannel:$('btnTgChannel'), btnStar:$('btnStar'), infoVersion:$('infoVersion'),
     dock:$('dock'), dockHandle:$('dockHandle'), toast:$('toast')
@@ -752,6 +765,27 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     toast('Запускаю прокси…');
   }
 
+  function fmtBytes(n){
+    var v = Number(n) || 0;
+    if (v < 1024) return v + ' B';
+    if (v < 1048576) return (v / 1024).toFixed(1) + ' KB';
+    if (v < 1073741824) return (v / 1048576).toFixed(1) + ' MB';
+    return (v / 1073741824).toFixed(2) + ' GB';
+  }
+
+  function refreshStats(){
+    var raw = call('getStats');
+    if (!raw) return;
+    var st;
+    try { st = JSON.parse(raw); } catch (e) { return; }
+    if (!st || typeof st.total !== 'number') return;
+    if (els.stTotal) els.stTotal.textContent = st.total;
+    if (els.stActive) els.stActive.textContent = st.active;
+    if (els.stWs) els.stWs.textContent = st.ws;
+    if (els.stUp) els.stUp.textContent = fmtBytes(st.up);
+    if (els.stDown) els.stDown.textContent = fmtBytes(st.down);
+  }
+
   function syncBgSeg(){
     Array.prototype.forEach.call(els.bgSeg.querySelectorAll('button'), function(b){
       b.classList.toggle('active', b.getAttribute('data-mode') === settings.bgMode);
@@ -799,6 +833,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       }
     }
     if (currentTab !== 'logs') return;
+    refreshStats();
     var text = call('getLogs') || '';
     if (text !== lines.join('\n')) {
       lines = text.split('\n').filter(function(l){ return l.length; });
@@ -939,6 +974,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     persist();
     call('openTelegram', settings.port, settings.secret);
   });
+  els.btnTest.addEventListener('click', function(){
+    var err = call('testConnection', settings.port);
+    if (err === null) { toast('Мост недоступен'); return; }
+    toast(err ? ('Нет соединения: ' + err) : ('Порт ' + settings.port + ' отвечает'));
+  });
+
   els.btnCopyLink.addEventListener('click', function(){ call('copyText', proxyLink()); toast('Ссылка скопирована'); });
   els.btnRegen.addEventListener('click', function(){
     var fresh = (call('generateSecret') || '').toLowerCase();

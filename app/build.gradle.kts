@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -11,6 +13,13 @@ val pythonVersion = "3.11"
 val pythonBinary = "/home/exestor/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11"
 val targetAbis = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
 
+// Ключи подписи лежат в keystore.properties (не в git).
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps = Properties().apply {
+    if (keystorePropsFile.exists()) keystorePropsFile.inputStream().use { load(it) }
+}
+val hasReleaseKey = keystorePropsFile.exists()
+
 android {
     namespace = "com.tgwsproxy19"
     compileSdk = 34
@@ -19,21 +28,36 @@ android {
         applicationId = "com.tgwsproxy19"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         ndk {
             abiFilters += targetAbis
         }
     }
 
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProps["storeFile"] as String)
+                storePassword = keystoreProps["storePassword"] as String
+                keyAlias = keystoreProps["keyAlias"] as String
+                keyPassword = keystoreProps["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (hasReleaseKey) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

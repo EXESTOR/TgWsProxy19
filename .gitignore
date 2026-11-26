@@ -24,3 +24,7 @@ captures/
 
 # Локальный клон апстрима (исходники уже лежат в app/src/main/python/proxy)
 upstream-proxy/
+
+# ключи подписи
+keystore/
+keystore.properties
