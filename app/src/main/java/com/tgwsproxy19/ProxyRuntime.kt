@@ -6,6 +6,6 @@ object ProxyRuntime {
     @Volatile var sleeping: Boolean = false
     @Volatile var status: String = "Остановлен"
     @Volatile var error: String? = null
-    @Volatile var port: Int = 1443
+    @Volatile var port: Int = 1445
     @Volatile var secret: String = ""
 }

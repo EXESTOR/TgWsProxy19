@@ -44,7 +44,7 @@ class ProxyForegroundService : Service() {
             return START_NOT_STICKY
         }
 
-        val port = intent?.getIntExtra(EXTRA_PORT, 1443) ?: 1443
+        val port = intent?.getIntExtra(EXTRA_PORT, 1445) ?: 1445
         val secret = intent?.getStringExtra(EXTRA_SECRET).orEmpty()
         val noH2 = intent?.getBooleanExtra(EXTRA_NO_H2, true) ?: true
         val dcIp = intent?.getStringExtra(EXTRA_DC_IP).orEmpty()

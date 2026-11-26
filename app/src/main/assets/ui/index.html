@@ -334,8 +334,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
         </button>
 
         <button class="btn soft" id="btnApply">
+          <span>Подключить в Telegram</span>
           <svg viewBox="0 0 24 24"><path d="M21 3L10.5 13.5"/><path d="M21 3l-7 18-3.5-7.5L3 10z"/></svg>
-          Применить в Telegram
         </button>
 
         <div class="chips">
@@ -356,11 +356,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
           <div class="badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.5"/></svg></div>
           <h2>Как пользоваться</h2>
         </div>
-        <p class="about">Нажмите большую кнопку — прокси поднимется на 127.0.0.1. Дальше «Применить в Telegram», и клиент сам добавит прокси.</p>
+        <p class="about">Нажмите большую кнопку — прокси поднимется на 127.0.0.1. Порт по умолчанию 1445: 1443 часто занимает другое приложение, поэтому с ним может не работать. Дальше «Подключить в Telegram», и клиент сам добавит прокси.</p>
         <div class="notice">
           <h3>Если не подключается</h3>
           <ul>
-            <li>Порт 1443 часто занят другим приложением — смените на 1445.</li>
+            <li>Порт по умолчанию 1445: 1443 часто занимает другое приложение (например, другой прокси).</li>
             <li>Разрешите работу в фоне, иначе система остановит сервис.</li>
             <li>Причину ошибки покажет вкладка «Логи».</li>
           </ul>
@@ -376,7 +376,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
         </div>
 
         <label class="lbl">Порт</label>
-        <input class="input" id="inPort" type="number" inputmode="numeric" min="1" max="65535" value="1443">
+        <input class="input" id="inPort" type="number" inputmode="numeric" min="1" max="65535" value="1445">
 
         <label class="lbl">Секретный ключ</label>
         <div class="row">
@@ -512,17 +512,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     toggleBtn:$('toggleBtn'), toggleLabel:$('toggleLabel'),
     btnApply:$('btnApply'), btnCopyLink:$('btnCopyLink'), linkText:$('linkText'),
     chipPort:$('chipPort'), chipH2:$('chipH2'), chipDc:$('chipDc'),
-    inPort:$('inPort'), inSecret:$('inSecret'), inDc:$('inDc'), swH2:$('swH2'), swAuto:$('swAuto'),
+    inPort:$('inPort'), inSecret:$('inSecret'), inDc:$('inDc'), swH2:$('swH2'), swAuto:$('swAuto'), swSnow:$('swSnow'),
     btnRegen:$('btnRegen'), btnBattery:$('btnBattery'), dcSeg:$('dcSeg'),
     bgSeg:$('bgSeg'), bgNote:$('bgNote'), percentRow:$('percentRow'), percentRange:$('percentRange'), percentVal:$('percentVal'),
     logView:$('logView'), logSeg:$('logSeg'), logCount:$('logCount'),
     btnCopyLogs:$('btnCopyLogs'), btnClearLogs:$('btnClearLogs'),
-    btnGithub:$('btnGithub'), btnTgChannel:$('btnTgChannel'), infoVersion:$('infoVersion'),
+    btnGithub:$('btnGithub'), btnTgChannel:$('btnTgChannel'), btnStar:$('btnStar'), infoVersion:$('infoVersion'),
     dock:$('dock'), dockHandle:$('dockHandle'), toast:$('toast')
   };
 
-  var state = { running:false, sleeping:false, status:'', error:'', port:1443, secret:'' };
-  var settings = { port:1443, secret:'', noH2:true, dcIp:'4:149.154.167.220', autostart:true, bgMode:'saver', bgPercent:15, snow:true };
+  var state = { running:false, sleeping:false, status:'', error:'', port:1445, secret:'' };
+  var currentTab = 'proxy';
+  var settings = { port:1445, secret:'', noH2:true, dcIp:'4:149.154.167.220', autostart:true, bgMode:'saver', bgPercent:15, snow:true };
   var filter = 'all';
   var lines = [];
   var lastError = '';
@@ -582,7 +583,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 
   function loadSettings(){
     var s = parse(call('getSettings'), {});
-    settings.port = s.port || 1443;
+    settings.port = s.port || 1445;
     settings.secret = (s.secret || '').toLowerCase();
     settings.noH2 = (s.noH2 !== false);
     settings.dcIp = s.dcIp || '4:149.154.167.220';
@@ -610,7 +611,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   }
 
   function persist(){
-    settings.port = parseInt(els.inPort.value, 10) || 1443;
+    settings.port = parseInt(els.inPort.value, 10) || 1445;
     settings.secret = (els.inSecret.value || '').trim().toLowerCase();
     settings.noH2 = els.swH2.classList.contains('on');
     settings.autostart = els.swAuto.classList.contains('on');
@@ -762,7 +763,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     var s = parse(call('getState'), null);
     if (s) {
       var was = state.running;
-      state = { running: !!s.running, sleeping: !!s.sleeping, status: s.status || '', error: s.error || '', port: s.port || 1443, secret: s.secret || '' };
+      state = { running: !!s.running, sleeping: !!s.sleeping, status: s.status || '', error: s.error || '', port: s.port || 1445, secret: s.secret || '' };
       render();
       if (was !== state.running && state.running) toast('Прокси запущен на 127.0.0.1:' + state.port);
       if (state.error && state.error !== lastError) { lastError = state.error; toast(state.error.slice(0, 120)); }
@@ -992,6 +993,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       document.querySelectorAll('.dock-items button').forEach(function(b){ b.classList.remove('active'); });
       btn.classList.add('active');
       var name = btn.getAttribute('data-tab');
+      currentTab = name;
       document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
       var tab = document.getElementById('tab-' + name);
       if (tab) tab.classList.add('active');
@@ -1000,9 +1002,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     });
   });
 
-  loadSettings();
-  render();
-  tick();
+  try {
+    loadSettings();
+    render();
+    tick();
+  } catch (e) { console.error('init failed', e); }
   setTimeout(function(){ openDock(); }, 400);
   setInterval(tick, 1000);
 })();

@@ -33,7 +33,7 @@ class WebAppBridge(
     @JavascriptInterface
     fun getSettings(): String {
         val json = JSONObject()
-        json.put("port", prefs.getInt(KEY_PORT, 1443))
+        json.put("port", prefs.getInt(KEY_PORT, 1445))
         json.put("secret", prefs.getString(KEY_SECRET, "").orEmpty())
         json.put("noH2", prefs.getBoolean(KEY_NO_H2, true))
         json.put("dcIp", prefs.getString(KEY_DC_IP, DEFAULT_DC_IP).orEmpty())
