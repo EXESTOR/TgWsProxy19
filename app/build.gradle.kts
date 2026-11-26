@@ -4,17 +4,12 @@ plugins {
     id("com.chaquo.python")
 }
 
-// armv7 (старые устройства) собирается отдельным флагом:
-//   ./gradlew assembleDebug                 -> arm64-v8a + x86_64, Python 3.12
-//   ./gradlew assembleDebug -PlegacyArm=true -> armeabi-v7a, Python 3.11
-val legacyArm = (findProperty("legacyArm") as String?)?.toBoolean() ?: false
-val pythonVersion = if (legacyArm) "3.11" else "3.12"
-val pythonBinary = if (legacyArm) {
-    "/home/exestor/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11"
-} else {
-    "/home/exestor/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/bin/python3.12"
-}
-val targetAbis = if (legacyArm) listOf("armeabi-v7a") else listOf("arm64-v8a", "x86_64")
+// Универсальная сборка: все ABI в одном APK.
+// Python 3.11 — единственная версия Chaquopy, которая поддерживает
+// 32-битные ABI (armeabi-v7a, x86), поэтому она используется для всех.
+val pythonVersion = "3.11"
+val pythonBinary = "/home/exestor/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11"
+val targetAbis = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
 
 android {
     namespace = "com.tgwsproxy19"
@@ -24,8 +19,8 @@ android {
         applicationId = "com.tgwsproxy19"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = if (legacyArm) "1.1-legacy" else "1.1"
+        versionCode = 3
+        versionName = "1.2"
 
         ndk {
             abiFilters += targetAbis

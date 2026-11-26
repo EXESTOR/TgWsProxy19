@@ -22,6 +22,7 @@ class WebAppBridge(
     fun getState(): String {
         val json = JSONObject()
         json.put("running", ProxyRuntime.running)
+        json.put("sleeping", ProxyRuntime.sleeping)
         json.put("status", ProxyRuntime.status)
         json.put("error", ProxyRuntime.error ?: "")
         json.put("port", ProxyRuntime.port)
@@ -39,6 +40,7 @@ class WebAppBridge(
         json.put("autostart", prefs.getBoolean(KEY_AUTOSTART, true))
         json.put("bgMode", prefs.getString(KEY_BG_MODE, "saver"))
         json.put("bgPercent", prefs.getInt(KEY_BG_PERCENT, 15))
+        json.put("snow", prefs.getBoolean(KEY_SNOW, true))
         return json.toString()
     }
 
@@ -63,6 +65,11 @@ class WebAppBridge(
             .putString(KEY_BG_MODE, mode)
             .putInt(KEY_BG_PERCENT, percent.coerceIn(5, 60))
             .apply()
+    }
+
+    @JavascriptInterface
+    fun setSnow(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SNOW, enabled).apply()
     }
 
     @JavascriptInterface
@@ -152,5 +159,6 @@ class WebAppBridge(
         private const val KEY_AUTOSTART = "autostart"
         private const val KEY_BG_MODE = "bg_mode"
         private const val KEY_BG_PERCENT = "bg_percent"
+        private const val KEY_SNOW = "snow"
     }
 }

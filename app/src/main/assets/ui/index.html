@@ -53,6 +53,7 @@ body{background:var(--bg);color:var(--text);overflow:hidden;
   color:transparent;-webkit-text-fill-color:transparent;
   animation:gradientMove 4.2s linear infinite;font-weight:800;letter-spacing:.01em}
 
+#snow{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.9}
 .app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;max-width:640px;margin:0 auto}
 
 header{display:flex;align-items:center;gap:12px;padding:18px 18px 6px}
@@ -311,6 +312,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 </head>
 <body>
 <div class="bg"><span class="glow g1"></span><span class="glow g2"></span></div>
+<canvas id="snow"></canvas>
 
 <div class="app">
   <header>
@@ -399,6 +401,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
         </div>
 
         <div class="switch-row">
+          <div><div class="t">Снег</div><div class="s">зимний эффект на фоне</div></div>
+          <div class="spacer"></div>
+          <button class="switch on" id="swSnow" role="switch" aria-checked="true"><i></i></button>
+        </div>
+
+        <div class="switch-row">
           <div><div class="t">Автозапуск</div><div class="s">стартовать при открытии</div></div>
           <div class="spacer"></div>
           <button class="switch on" id="swAuto" role="switch" aria-checked="true"><i></i></button>
@@ -463,6 +471,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
           <div class="tile"><div class="k">ABI</div><div class="v">arm64-v8a</div></div>
         </div>
         <button class="btn ghost" id="btnGithub" style="margin-top:14px">Исходники на GitHub</button>
+        <button class="btn soft" id="btnStar" style="margin-top:10px">⭐ Поставить звезду на GitHub</button>
         <button class="btn soft" id="btnTgChannel" style="margin-top:10px">
           <svg viewBox="1.898 1.636 21.002 17.285"><path d="M21.9 3.1c.3-.9-.6-1.7-1.5-1.4L2.7 8.6c-1 .3-1.1 1.7-.1 2.1l4.6 1.8 1.7 5.6c.2.8 1.3 1 1.8.3l2.4-3.1 4.6 3.4c.7.5 1.7.1 1.9-.7l3.3-15z"/></svg>
           <span class="grad-text">Мой Telegram-канал @EXESTOR</span>
@@ -512,8 +521,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     dock:$('dock'), dockHandle:$('dockHandle'), toast:$('toast')
   };
 
-  var state = { running:false, status:'', error:'', port:1443, secret:'' };
-  var settings = { port:1443, secret:'', noH2:true, dcIp:'4:149.154.167.220', autostart:true, bgMode:'saver', bgPercent:15 };
+  var state = { running:false, sleeping:false, status:'', error:'', port:1443, secret:'' };
+  var settings = { port:1443, secret:'', noH2:true, dcIp:'4:149.154.167.220', autostart:true, bgMode:'saver', bgPercent:15, snow:true };
   var filter = 'all';
   var lines = [];
   var lastError = '';
@@ -580,6 +589,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     settings.autostart = (s.autostart !== false);
     settings.bgMode = s.bgMode || 'saver';
     settings.bgPercent = parseInt(s.bgPercent, 10) || 15;
+    settings.snow = (s.snow !== false);
     if (!settings.secret) settings.secret = (call('generateSecret') || '').toLowerCase();
     els.inPort.value = settings.port;
     els.inSecret.value = settings.secret;
@@ -587,6 +597,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     setSwitch(els.swH2, settings.noH2);
     setSwitch(els.swAuto, settings.autostart);
     syncBgSeg();
+    setSwitch(els.swSnow, settings.snow);
+    snowSet(settings.snow);
     els.infoVersion.textContent = call('version') || '1.0';
     persist();
     syncDcSeg();
@@ -606,6 +618,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     call('saveSettings', settings.port, settings.secret, settings.noH2, settings.dcIp);
     call('setAutostart', settings.autostart);
     call('setBackgroundPolicy', settings.bgMode, settings.bgPercent);
+    call('setSnow', settings.snow);
     updateChips();
     updateLink();
   }
@@ -648,7 +661,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     if (running) {
       title = 'Прокси работает';
       sub = '127.0.0.1:' + state.port + ' · dd' + (state.secret || settings.secret).slice(0,6) + '…';
-      els.heroHint.style.display = 'none';
+      if (state.sleeping) {
+        els.heroHint.style.display = '';
+        els.heroHint.textContent = 'спит — проснётся при подключении Telegram';
+      } else {
+        els.heroHint.style.display = 'none';
+      }
       setLabel('Остановить');
     } else if (status.indexOf('Запуск') === 0) {
       title = 'Запуск…'; sub = 'поднимаю Python-ядро'; els.heroHint.textContent = 'секунду…';
@@ -723,10 +741,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     els.percentRow.classList.toggle('show', settings.bgMode === 'percent');
     if (els.bgNote) {
       els.bgNote.textContent = settings.bgMode === 'saver'
-        ? 'Прокси остановится, когда включено энергосбережение или экран телефона выключен.'
+        ? 'Прокси не выключается: при энергосбережении или выключенном экране он «спит» и просыпается от подключения.'
         : (settings.bgMode === 'percent'
-          ? 'Прокси остановится, когда заряд опустится до выбранного значения.'
-          : 'Прокси не останавливается автоматически.');
+          ? 'Ниже выбранного заряда прокси «спит» — просыпается, когда открыт Telegram.'
+          : 'Прокси работает без ограничений.');
     }
     els.percentRange.value = settings.bgPercent;
     els.percentVal.textContent = settings.bgPercent + '%';
@@ -744,7 +762,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     var s = parse(call('getState'), null);
     if (s) {
       var was = state.running;
-      state = { running: !!s.running, status: s.status || '', error: s.error || '', port: s.port || 1443, secret: s.secret || '' };
+      state = { running: !!s.running, sleeping: !!s.sleeping, status: s.status || '', error: s.error || '', port: s.port || 1443, secret: s.secret || '' };
       render();
       if (was !== state.running && state.running) toast('Прокси запущен на 127.0.0.1:' + state.port);
       if (state.error && state.error !== lastError) { lastError = state.error; toast(state.error.slice(0, 120)); }
@@ -762,6 +780,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
         }, 600);
       }
     }
+    if (currentTab !== 'logs') return;
     var text = call('getLogs') || '';
     if (text !== lines.join('\n')) {
       lines = text.split('\n').filter(function(l){ return l.length; });
@@ -769,7 +788,77 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     }
   }
 
-  /* --- док: свайп вверх открыть, вниз закрыть, автоскрытие по простою --- */
+  /* --- снег --- */
+  var snowOn = true, snowRaf = null, snowCtx = null, snowFlakes = [], snowW = 0, snowH = 0;
+  var snowCanvas = document.getElementById('snow');
+
+  function snowResize(){
+    if (!snowCanvas) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    snowW = window.innerWidth; snowH = window.innerHeight;
+    snowCanvas.width = Math.round(snowW * dpr);
+    snowCanvas.height = Math.round(snowH * dpr);
+    snowCtx = snowCanvas.getContext('2d');
+    snowCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    snowSpawn();
+  }
+
+  function snowSpawn(){
+    var count = Math.round((snowW * snowH) / 22000);
+    count = Math.max(24, Math.min(count, 70));
+    snowFlakes = [];
+    for (var i = 0; i < count; i++) {
+      snowFlakes.push({
+        x: Math.random() * snowW,
+        y: Math.random() * snowH,
+        r: Math.random() * 1.8 + 0.7,
+        vy: Math.random() * 0.5 + 0.25,
+        vx: Math.random() * 0.3 - 0.15,
+        a: Math.random() * 0.5 + 0.25
+      });
+    }
+  }
+
+  function snowFrame(){
+    if (!snowOn || !snowCtx) { snowRaf = null; return; }
+    snowCtx.clearRect(0, 0, snowW, snowH);
+    for (var i = 0; i < snowFlakes.length; i++) {
+      var f = snowFlakes[i];
+      f.y += f.vy;
+      f.x += f.vx + Math.sin((f.y + f.r * 30) / 70) * 0.18;
+      if (f.y > snowH + 4) { f.y = -4; f.x = Math.random() * snowW; }
+      if (f.x < -4) f.x = snowW + 4;
+      if (f.x > snowW + 4) f.x = -4;
+      snowCtx.beginPath();
+      snowCtx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      snowCtx.fillStyle = 'rgba(255,255,255,' + f.a.toFixed(2) + ')';
+      snowCtx.fill();
+    }
+    snowRaf = requestAnimationFrame(snowFrame);
+  }
+
+  function snowSet(on){
+    snowOn = !!on;
+    if (snowOn) {
+      if (!snowCanvas) return;
+      if (!snowW) snowResize();
+      if (!snowRaf) snowRaf = requestAnimationFrame(snowFrame);
+    } else {
+      if (snowRaf) { cancelAnimationFrame(snowRaf); snowRaf = null; }
+      if (snowCtx) snowCtx.clearRect(0, 0, snowW, snowH);
+    }
+  }
+
+  window.addEventListener('resize', snowResize);
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) {
+      if (snowRaf) { cancelAnimationFrame(snowRaf); snowRaf = null; }
+    } else if (snowOn) {
+      snowSet(true);
+    }
+  });
+
+  /* --- док: свайп влево открыть, вправо закрыть, автоскрытие по простою --- */
   var startY = null, dragging = false, touching = false, dockTimer = null;
   var DOCK_IDLE_MS = 9000;
 
@@ -844,6 +933,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     setSwitch(els.swH2, !els.swH2.classList.contains('on'));
     persist();
   });
+  els.swSnow.addEventListener('click', function(){
+    settings.snow = !els.swSnow.classList.contains('on');
+    setSwitch(els.swSnow, settings.snow);
+    snowSet(settings.snow);
+    persist();
+    toast(settings.snow ? 'Снег включён' : 'Снег выключен');
+  });
+
   els.swAuto.addEventListener('click', function(){
     setSwitch(els.swAuto, !els.swAuto.classList.contains('on'));
     persist();
@@ -869,6 +966,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   els.btnCopyLogs.addEventListener('click', function(){ call('copyText', lines.join('\n')); toast('Лог скопирован'); });
   els.btnClearLogs.addEventListener('click', function(){ call('clearLogs'); lines = []; renderLogs(); toast('Лог очищен'); });
   els.btnGithub.addEventListener('click', function(){ call('openUrl', 'https://github.com/Flowseal/tg-ws-proxy'); });
+  els.btnStar.addEventListener('click', function(){ call('openUrl', 'https://github.com/EXESTOR/TgWsProxy19'); });
   els.btnTgChannel.addEventListener('click', function(){ call('openUrl', 'https://t.me/EXESTOR'); });
 
   els.dcSeg.querySelectorAll('button').forEach(function(btn){

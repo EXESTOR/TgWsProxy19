@@ -63,6 +63,7 @@ class ProxyForegroundService : Service() {
             val error = PyBridge.start(port, secret, noH2, dcIp)
             if (error.isBlank()) {
                 ProxyRuntime.running = true
+                ProxyRuntime.sleeping = false
                 ProxyRuntime.status = "Работает на 127.0.0.1:$port"
                 notifyStatus("Прокси работает • 127.0.0.1:$port")
                 evaluatePowerPolicy()
@@ -126,43 +127,41 @@ class ProxyForegroundService : Service() {
         batteryReceiver = null
     }
 
-    /** Останавливает прокси по выбранной политике: энергосбережение или порог заряда. */
+    /**
+     * Политика «сна»: прокси не выключается, а отпускает WakeLock и ждёт подключения.
+     * Будит его первое же соединение от Telegram (экран включён / клиент активен).
+     */
     private fun evaluatePowerPolicy() {
         if (!ProxyRuntime.running) return
         val mode = prefs.getString("bg_mode", "saver") ?: "saver"
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+
+        var shouldSleep = false
+        var reason = ""
         when (mode) {
             "saver" -> {
-                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-                if (pm.isPowerSaveMode) {
-                    stopByPolicy("включено энергосбережение")
-                } else if (!pm.isInteractive) {
-                    stopByPolicy("экран выключен")
-                }
+                if (pm.isPowerSaveMode) { shouldSleep = true; reason = "энергосбережение" }
+                else if (!pm.isInteractive) { shouldSleep = true; reason = "экран выключен" }
             }
             "percent" -> {
                 val bm = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
                 val level = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
                 val threshold = prefs.getInt("bg_percent", 15)
-                if (level in 1..threshold) stopByPolicy("заряд $level% ≤ $threshold%")
+                if (level in 1..threshold) { shouldSleep = true; reason = "заряд $level% ≤ $threshold%" }
             }
         }
-    }
 
-    private fun stopByPolicy(reason: String) {
-        if (!ProxyRuntime.running) return
-        ProxyRuntime.error = "Остановлено: $reason"
-        ProxyRuntime.status = "Остановлено"
-        notifyStatus("Остановлено: $reason")
-        Thread {
-            try {
-                PyBridge.stop()
-            } catch (_: Throwable) {
-            }
-            ProxyRuntime.running = false
+        if (shouldSleep) {
+            ProxyRuntime.sleeping = true
+            ProxyRuntime.status = "Работает · сон"
             releaseWakeLock()
-            stopForegroundCompat()
-            stopSelf()
-        }.start()
+            notifyStatus("Спит: $reason. Проснётся при подключении Telegram")
+        } else if (ProxyRuntime.sleeping) {
+            ProxyRuntime.sleeping = false
+            ProxyRuntime.status = "Работает на 127.0.0.1:${ProxyRuntime.port}"
+            acquireWakeLock()
+            notifyStatus("Прокси работает • 127.0.0.1:${ProxyRuntime.port}")
+        }
     }
 
     override fun onDestroy() {
