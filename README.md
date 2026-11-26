@@ -47,7 +47,10 @@ Python-ядро ([tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy)) раб�
   (5–60 %) или без ограничений;
 - 🌙 **Экран выключен — прокси остановлен** (в режиме «Энергосбережение»);
 - 📲 **Применить в Telegram** — ссылка `tg://proxy` открывается сразу в Telegram;
-- 📜 **Живые логи** — фильтры Все / Info / Error, копирование и очистка;
+- 📜 **Живые логи** — фильтры Все / Info / Error, копирование и очистка, **цветные ошибки**;
+- 📊 **Статистика** — соединения, WS, трафик ↑/↓ прямо во вкладке «Логи»;
+- 🔌 **Проверка соединения** — TCP-коннект к локальному порту и понятный результат;
+- 🧩 **Виджет 1×1** — включение/выключение с рабочего стола;
 - 🎨 **Тёмная тема** — пепельный / тёмно-синий / фиолетовый, стеклянные панели,
   выезжающая слева капсула-навигация;
 - ❄️ **Снег** — зимний эффект на фоне, включается/выключается в настройках;
@@ -81,7 +84,7 @@ Telegram → MTProto-прокси (127.0.0.1:1443) → WebSocket (TLS) → DC Te
 
 | Файл | Архитектуры | Python | Кому |
 |---|---|---|---|
-| `TgWsProxy19-universal-debug.apk` | `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64` | 3.11 | всем: и новые, и старые телефоны |
+| `TgWsProxy19-1.3-release.apk` | `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64` | 3.11 | всем: и новые, и старые телефоны |
 
 > Один APK на все устройства. Требуется Android 8.0 (API 26) и выше.
 
@@ -127,10 +130,28 @@ MTProto, сервер `127.0.0.1`, порт из настроек, secret из �
   единственная, кто поддерживает 32-битные ABI).
 
 ```bash
+# debug
 ./gradlew assembleDebug
+
+# подписанный release (нужен keystore.properties)
+./gradlew assembleRelease
 ```
 
-На выходе один APK со всеми ABI: `app/build/outputs/apk/debug/app-debug.apk`.
+На выходе один APK со всеми ABI: `app/build/outputs/apk/release/app-release.apk`.
+
+### Подпись
+
+Release-сборка подписывается ключом из `keystore.properties` (в git не попадает):
+
+```properties
+storeFile=keystore/release.jks
+storePassword=...
+keyAlias=tgwsproxy
+keyPassword=...
+```
+
+Файл `keystore.properties` и папка `keystore/` в `.gitignore`. **Храните keystore и пароль** —
+без них нельзя выпустить обновление поверх установленной версии.
 
 Готовый APK: `app/build/outputs/apk/debug/app-debug.apk`.
 
