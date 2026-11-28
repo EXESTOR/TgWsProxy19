@@ -314,6 +314,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   padding:11px 16px;border-radius:13px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.22s;
   -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* --- упрощённый главный экран --- */
+.hero{text-align:center;padding:6px 0 12px}
+.hero .meta{margin-top:6px;font-size:11px;color:var(--dim);letter-spacing:.02em}
+.orb{cursor:pointer;-webkit-appearance:none;appearance:none;border:0;padding:0}
+.orb:active{transform:scale(.97)}
+.about-card h2{font-size:16px;font-weight:700;margin-bottom:8px}
+.about-card p{font-size:13.5px;line-height:1.6;color:#aebbd4;margin-top:4px}
+.spoiler{margin-top:14px;font-size:12.5px;color:#9aa6bd}
+.spoiler summary{cursor:pointer;color:#c3c9d6;font-weight:600}
+.spoiler ul{margin:8px 0 0 18px}
+.spoiler li{margin-top:4px;line-height:1.5}
+/* без «матрешки» из рамок */
+.card,.chip,.seg button,.btn.soft,.btn.ghost,.link-row,.copy,.iconbtn,.input,.tile,.dock-bg,.switch{border:0}
+.seg button.active{border:0}
+.switch-row{border-top:0}
 </style>
 </head>
 <body>
@@ -323,56 +339,45 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 <div class="app">
   <header>
     <div class="logo"><svg viewBox="1.898 1.636 21.002 17.285"><path d="M21.9 3.1c.3-.9-.6-1.7-1.5-1.4L2.7 8.6c-1 .3-1.1 1.7-.1 2.1l4.6 1.8 1.7 5.6c.2.8 1.3 1 1.8.3l2.4-3.1 4.6 3.4c.7.5 1.7.1 1.9-.7l3.3-15z"/></svg></div>
-    <div><h1>TgWsProxy<span>19</span></h1><p>mtproto ws proxy</p></div>
+    <div><h1>TgWsProxy<span>19</span></h1></div>
   </header>
 
   <main>
     <section class="tab active" id="tab-proxy">
-      <div class="card hero">
-        <div class="orb" id="orb"><svg viewBox="1.898 1.636 21.002 17.285"><path d="M21.9 3.1c.3-.9-.6-1.7-1.5-1.4L2.7 8.6c-1 .3-1.1 1.7-.1 2.1l4.6 1.8 1.7 5.6c.2.8 1.3 1 1.8.3l2.4-3.1 4.6 3.4c.7.5 1.7.1 1.9-.7l3.3-15z"/></svg></div>
+      <div class="hero">
+        <button class="orb" id="orb" aria-label="Включить прокси" aria-pressed="false">
+          <svg viewBox="1.898 1.636 21.002 17.285"><path d="M21.9 3.1c.3-.9-.6-1.7-1.5-1.4L2.7 8.6c-1 .3-1.1 1.7-.1 2.1l4.6 1.8 1.7 5.6c.2.8 1.3 1 1.8.3l2.4-3.1 4.6 3.4c.7.5 1.7.1 1.9-.7l3.3-15z"/></svg>
+        </button>
         <h2 id="heroTitle">Прокси остановлен</h2>
         <p class="sub" id="heroSub">127.0.0.1:1445</p>
-        <p class="hint" id="heroHint">нажмите кнопку ниже</p>
-
-        <button class="bigbtn" id="toggleBtn" aria-pressed="false">
-          <svg class="bb-icon" viewBox="0 0 24 24"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"/></svg>
-          <span class="label" id="toggleLabel"></span>
-        </button>
+        <p class="meta" id="heroMeta">CF: авто · H2: off · DC 4</p>
+        <p class="hint" id="heroHint">нажмите на самолётик</p>
 
         <button class="btn soft" id="btnApply">
           <span>Подключить в Telegram</span>
           <svg viewBox="0 0 24 24"><path d="M21 3L10.5 13.5"/><path d="M21 3l-7 18-3.5-7.5L3 10z"/></svg>
         </button>
 
-        <div class="chips">
-          <span class="chip">CF <b>авто</b></span>
-          <span class="chip">Порт <b id="chipPort">1445</b></span>
-          <span class="chip">H2 <b id="chipH2">off</b></span>
-          <span class="chip">DC <b id="chipDc">4</b></span>
-        </div>
-
-        <button class="btn ghost" id="btnTest" style="margin-top:10px">Проверить соединение</button>
-
         <div class="link-row">
           <code id="linkText">tg://proxy?…</code>
-          <button class="copy" id="btnCopyLink">копировать</button>
+          <button class="copy" id="btnCopyLink">Копировать</button>
         </div>
+
+        <button class="btn ghost" id="btnTest">Проверить соединение</button>
       </div>
 
-      <div class="card">
-        <div class="card-head">
-          <div class="badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.5"/></svg></div>
-          <h2>Как пользоваться</h2>
-        </div>
-        <p class="about">Нажмите большую кнопку — прокси поднимется на 127.0.0.1. Порт по умолчанию 1445: 1443 часто занимает другое приложение, поэтому с ним может не работать. Дальше «Подключить в Telegram», и клиент сам добавит прокси.</p>
-        <div class="notice">
-          <h3>Если не подключается</h3>
+      <div class="card about-card">
+        <h2>Как пользоваться</h2>
+        <p>1. Нажмите на самолётик — прокси запустится.</p>
+        <p>2. Нажмите «Подключить в Telegram».</p>
+        <details class="spoiler">
+          <summary>Проблемы с подключением?</summary>
           <ul>
-            <li>Порт по умолчанию 1445: 1443 часто занимает другое приложение (например, другой прокси).</li>
+            <li>Порт 1445 по умолчанию — 1443 часто занят другим приложением.</li>
             <li>Разрешите работу в фоне, иначе система остановит сервис.</li>
             <li>Причину ошибки покажет вкладка «Логи».</li>
           </ul>
-        </div>
+        </details>
       </div>
     </section>
 
@@ -537,9 +542,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 
   var els = {
     orb:$('orb'), heroTitle:$('heroTitle'), heroSub:$('heroSub'), heroHint:$('heroHint'),
-    toggleBtn:$('toggleBtn'), toggleLabel:$('toggleLabel'),
+    heroMeta:$('heroMeta'),
     btnApply:$('btnApply'), btnCopyLink:$('btnCopyLink'), linkText:$('linkText'),
-    chipPort:$('chipPort'), chipH2:$('chipH2'), chipDc:$('chipDc'),
     inPort:$('inPort'), inSecret:$('inSecret'), inDc:$('inDc'), swH2:$('swH2'), swAuto:$('swAuto'), swSnow:$('swSnow'),
     btnRegen:$('btnRegen'), btnBattery:$('btnBattery'), dcSeg:$('dcSeg'),
     bgSeg:$('bgSeg'), bgNote:$('bgNote'), percentRow:$('percentRow'), percentRange:$('percentRange'), percentVal:$('percentVal'),
@@ -661,9 +665,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   }
 
   function updateChips(){
-    els.chipPort.textContent = settings.port;
-    els.chipH2.textContent = settings.noH2 ? 'off' : 'on';
-    els.chipDc.textContent = dcLabel();
+    if (!els.heroMeta) return;
+    els.heroMeta.textContent = 'CF: авто · H2: ' + (settings.noH2 ? 'off' : 'on') + ' · DC ' + dcLabel();
   }
 
   function proxyLink(){
@@ -682,38 +685,30 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     var status = state.status || '';
 
     els.orb.classList.toggle('on', running);
-    els.toggleBtn.classList.toggle('on', running);
-    els.toggleBtn.setAttribute('aria-pressed', running ? 'true' : 'false');
+    els.orb.setAttribute('aria-pressed', running ? 'true' : 'false');
     els.btnApply.disabled = !running;
 
     var title = 'Прокси остановлен';
     var sub = '127.0.0.1:' + (running ? state.port : settings.port);
+    els.heroHint.style.display = '';
+    els.heroHint.textContent = 'нажмите на самолётик';
 
     if (running) {
       title = 'Прокси работает';
       sub = '127.0.0.1:' + state.port + ' · dd' + (state.secret || settings.secret).slice(0,6) + '…';
       if (state.sleeping) {
-        els.heroHint.style.display = '';
         els.heroHint.textContent = 'спит — проснётся при подключении Telegram';
       } else {
         els.heroHint.style.display = 'none';
       }
-      setLabel('Остановить');
     } else if (status.indexOf('Запуск') === 0) {
       title = 'Запуск…'; sub = 'поднимаю Python-ядро'; els.heroHint.textContent = 'секунду…';
-      setLabel('Запуск…');
     } else if (status.indexOf('Остановка') === 0) {
       title = 'Остановка…'; sub = 'закрываю сокеты'; els.heroHint.textContent = 'секунду…';
-      setLabel('Остановка…');
     } else if (error) {
       title = 'Ошибка запуска';
       sub = error.length > 90 ? error.slice(0, 90) + '…' : error;
       els.heroHint.textContent = 'смотрите логи';
-      setLabel('Повторить');
-    } else {
-      els.heroHint.style.display = '';
-      els.heroHint.textContent = 'нажмите кнопку ниже';
-      setLabel('Запустить');
     }
 
     els.heroTitle.textContent = title;
@@ -759,7 +754,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     if (err) { toast(err); return; }
     persist();
     startProxy();
-    burst();
     els.heroTitle.textContent = 'Запуск…';
     els.heroHint.textContent = 'секунду…';
     toast('Запускаю прокси…');
@@ -967,7 +961,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     if (els.dock.classList.contains('open')) closeDock(); else openDock();
   });
 
-  els.toggleBtn.addEventListener('click', toggleProxy);
+  els.orb.addEventListener('click', toggleProxy);
   els.btnApply.addEventListener('click', function(){
     var err = validate();
     if (err) { toast(err); return; }
